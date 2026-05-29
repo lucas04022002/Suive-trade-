@@ -817,22 +817,17 @@
       </div>
 
       <div id="instructions-mt5" class="import-instructions">
-        <strong>Comment exporter depuis MT5 :</strong><br>
-        1. Ouvre MT5 → onglet <strong>Toolbox</strong> (bas de l'écran, Ctrl+T)<br>
-        2. Clique sur <strong>History</strong><br>
-        3. Clic droit → <strong>Save as Report</strong> ou <strong>Save as Detailed Report</strong><br>
-        4. Sauvegarde en <strong>.htm / .html</strong><br>
-        5. Ouvre le fichier .htm dans Excel → Fichier → Enregistrer sous → <strong>CSV UTF-8</strong><br><br>
-        <strong>Colonnes attendues :</strong> Time, Symbol, Type, Volume, Price, S/L, T/P, Profit
+        <strong>MT5 — Pepperstone Demo ou FTMO :</strong><br>
+        1. MT5 → bas → <strong>Toolbox</strong> (Ctrl+T) → onglet <strong>History</strong><br>
+        2. Clic droit → <strong>Save as Report</strong> → sauvegarde en <strong>.htm</strong><br>
+        3. Ouvre dans <strong>Google Sheets</strong> → Fichier → Télécharger → <strong>CSV</strong><br><br>
+        <strong>Fichier attendu :</strong> ReportHistory-XXXXXXX.csv
       </div>
       <div id="instructions-tv" class="import-instructions" style="display:none">
-        <strong>Comment exporter depuis TradingView :</strong><br>
-        1. Ouvre ton strategy dans TradingView<br>
-        2. Onglet <strong>Strategy Tester</strong> en bas<br>
-        3. Clique sur <strong>List of Trades</strong><br>
-        4. Icône <strong>télécharger</strong> (export CSV) en haut à droite<br><br>
-        <strong>Colonnes attendues :</strong> Trade #, Type, Signal, Date/Time, Price, Contracts, Profit, Cumulative
-        Profit, Run-up, Drawdown
+        <strong>Pepperstone TradingView :</strong><br>
+        1. TradingView → panneau trading en bas → onglet <strong>Historique</strong><br>
+        2. Icône <strong>télécharger</strong> (flèche bas) en haut à droite du tableau<br><br>
+        <strong>Fichier attendu :</strong> pepperstone-order-history-all-XXXX.csv
       </div>
 
       <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
@@ -1183,119 +1178,219 @@
       document.getElementById('btn-confirm-import').disabled = true;
     }
 
-    function showPreview(trades) {
+    function showPreview(list) {
       const el = document.getElementById('import-preview');
       el.style.display = 'block';
-      el.innerHTML = '<i class="ti ti-circle-check" style="margin-right:6px"></i>' + trades.length + ' trade(s) détecté(s) — prêt à importer.';
+      el.innerHTML = '<i class="ti ti-circle-check" style="margin-right:6px"></i>' + list.length + ' trade(s) détecté(s) — prêt à importer.';
       document.getElementById('import-error').style.display = 'none';
       document.getElementById('btn-confirm-import').disabled = false;
     }
 
-    function parseCSV(text, filename) {
+    function cleanNum(s) {
+      if (!s) return NaN;
+      // Supprime espaces insécables, espaces, garde chiffres / point / virgule / signe
+      return parseFloat(s.replace(/\s/g, '').replace(',', '.').replace(/[^0-9.\-]/g, ''));
+    }
+
+    function splitCSV(line, sep) {
+      const result = []; let cur = ''; let inQ = false;
+      for (let i = 0; i < line.length; i++) {
+        const c = line[i];
+        if (c === '"') { inQ = !inQ; continue; }
+        if (c === sep && !inQ) { result.push(cur.trim()); cur = ''; continue; }
+        cur += c;
+      }
+      result.push(cur.trim());
+      return result;
+    }
+
+    function parseCSV(text) {
       pendingImport = [];
-      // Nettoyer BOM et espaces
       text = text.replace(/^\uFEFF/, '').trim();
-      const lines = text.split(/\r?\n/).filter(l => l.trim());
-      if (lines.length < 2) { showError('Fichier vide ou invalide.'); return; }
-
-      // Détecter le séparateur
-      const sep = lines[0].includes('\t') ? '\t' : lines[0].includes(';') ? ';' : ',';
-
-      const parseRow = line => {
-        const result = []; let cur = ''; let inQ = false;
-        for (let i = 0; i < line.length; i++) {
-          const c = line[i];
-          if (c === '"') { inQ = !inQ; continue; }
-          if (c === sep && !inQ) { result.push(cur.trim()); cur = ''; continue; }
-          cur += c;
-        }
-        result.push(cur.trim());
-        return result;
-      };
-
-      const headers = parseRow(lines[0]).map(h => h.toLowerCase().replace(/[^a-z0-9]/g, ''));
-      console.log('Headers:', headers);
+      const allLines = text.split(/\r?\n/);
 
       if (importSource === 'mt5') {
-        pendingImport = parseMT5(headers, lines, parseRow);
+        pendingImport = parseMT5(allLines);
       } else {
-        pendingImport = parseTV(headers, lines, parseRow);
+        pendingImport = parsePepperstoneTV(allLines);
       }
 
       if (pendingImport.length === 0) {
-        showError('Aucun trade valide trouvé. Vérifiez le format et le type sélectionné (MT5 ou TradingView).');
+        showError('Aucun trade valide trouvé. Vérifiez que le bon onglet est sélectionné (MT5 ou TradingView).');
       } else {
         showPreview(pendingImport);
       }
     }
 
-    function parseMT5(headers, lines, parseRow) {
-      // Colonnes MT5 Positions: Time, Symbol, Ticket, Type, Volume, Price, S/L, T/P, Time(close), Price(close), Profit
-      // On cherche les index flexiblement
-      const find = (...names) => { for (const n of names) { const i = headers.indexOf(n); if (i !== -1) return i; } return -1; };
-      const iTime = find('time', 'opentime', 'datetime');
-      const iSymbol = find('symbol', 'instrument', 'pair');
-      const iType = find('type', 'direction', 'side');
-      const iVol = find('volume', 'lots', 'qty', 'contracts');
-      const iPrice = find('price', 'openprice', 'entryprice', 'entry');
-      const iProfit = find('profit', 'pl', 'pnl', 'grosspl', 'netresult', 'result');
-
-      if (iProfit === -1) { return []; }
+    function parseMT5(allLines) {
+      // Format MT5 Pepperstone/FTMO :
+      // Ligne header (ligne 8) : Heure,Position,Symbole,Type,Volume,Prix,S/L,T/P,Heure,Prix,Commission,Echange,Profit
+      // OU en anglais        : Time,Position,Symbol,Type,Volume,Price,S/L,T/P,Time,Price,Commission,Swap,Profit
+      // Les données réelles commencent après la ligne "Positions"
+      // Le format a des colonnes décalées avec des champs vides (la note est intercalée)
 
       const acc = document.getElementById('import-account').value;
       const result = [];
-      for (let i = 1; i < lines.length; i++) {
-        const row = parseRow(lines[i]);
-        if (row.length < 3) continue;
-        const profit = parseFloat((row[iProfit] || '').replace(',', '.'));
-        if (isNaN(profit)) continue;
-        // Ignorer lignes balance/dépôt
-        const type = (iType !== -1 ? row[iType] : '').toLowerCase();
-        if (type === 'balance' || type === 'credit' || type === 'deposit') continue;
 
-        const rawDate = iTime !== -1 ? row[iTime] : '';
-        const date = rawDate ? rawDate.split(' ')[0].replace(/\./g, '-') : new Date().toISOString().split('T')[0];
-        const symbol = iSymbol !== -1 ? row[iSymbol] : 'XAUUSD';
-        const dir = type.includes('sell') ? 'SELL' : 'BUY';
-        const lots = iVol !== -1 ? parseFloat((row[iVol] || '0').replace(',', '.')) || 0 : 0;
-        const entry = iPrice !== -1 ? parseFloat((row[iPrice] || '0').replace(',', '.')) || 0 : 0;
-
-        result.push({ id: Date.now() + i, acc, date, pair: symbol || 'XAUUSD', dir, lots, entry, exit: 0, pnl: profit, note: 'Import MT5' });
+      // Trouver la ligne header (contient "Heure" ou "Time" et "Profit")
+      let headerIdx = -1;
+      let sep = ',';
+      for (let i = 0; i < allLines.length; i++) {
+        const l = allLines[i];
+        if ((l.includes('Heure') || l.includes('Time')) && (l.includes('Profit') || l.includes('profit'))) {
+          sep = l.includes('\t') ? '\t' : l.includes(';') ? ';' : ',';
+          headerIdx = i;
+          break;
+        }
       }
+      if (headerIdx === -1) return [];
+
+      // Analyser les données ligne par ligne jusqu'à une ligne vide ou "Orders"
+      for (let i = headerIdx + 1; i < allLines.length; i++) {
+        const line = allLines[i].trim();
+        if (!line) break;
+        if (line.startsWith('Orders') || line.startsWith('Ordres') || line.startsWith('Résultats') || line.startsWith('Results')) break;
+
+        const cols = splitCSV(allLines[i], sep);
+        if (cols.length < 5) continue;
+
+        // Col 0: date/heure ouverture (format "2026.05.21 14:21:16")
+        const rawDate = cols[0].trim();
+        if (!rawDate || !rawDate.match(/\d{4}[.\-]\d{2}/)) continue;
+        const date = rawDate.split(' ')[0].replace(/\./g, '-');
+
+        // Col 2: symbole, Col 3: type (buy/sell)
+        // Attention : le format réel a la structure avec colonnes décalées
+        // Heure,Position,Symbole,Type,Volume,Prix,S/L,T/P,Heure,Prix,Commission,Echange,Profit
+        // mais visuellement : col0=date, col1=position, col2=symbol, col3=type/note, col4=note(parfois), ...
+        // On détecte le symbole et type en cherchant dans les premières colonnes
+        let symbol = 'XAUUSD';
+        let dir = 'BUY';
+        let lots = 0;
+        let entry = 0;
+        let exitPrice = 0;
+        let profit = NaN;
+        let note = '';
+
+        // Chercher le symbole (une des colonnes non vide qui ressemble à un ticker)
+        for (let c = 1; c < Math.min(cols.length, 6); c++) {
+          const v = cols[c].trim();
+          if (v.match(/^[A-Z]{2,10}(USD|EUR|GBP|JPY|CAD|CHF|AUD|NZD|XAU|NAS|SPX|US30)?$/i) && v.length >= 3 && v.length <= 12) {
+            symbol = v.toUpperCase();
+            break;
+          }
+        }
+
+        // Chercher buy/sell dans les premières colonnes
+        for (let c = 1; c < Math.min(cols.length, 6); c++) {
+          const v = cols[c].trim().toLowerCase();
+          if (v === 'buy' || v === 'sell') { dir = v.toUpperCase(); break; }
+        }
+
+        // Chercher le profit : dernière colonne numérique non vide
+        // Dans ce format : col index 12 environ (Commission, Swap, Profit en fin)
+        // On remonte depuis la fin pour trouver le profit
+        for (let c = cols.length - 1; c >= 5; c--) {
+          const v = cleanNum(cols[c]);
+          if (!isNaN(v) && cols[c].trim() !== '') {
+            profit = v;
+            break;
+          }
+        }
+        if (isNaN(profit)) continue;
+
+        // Volume : chercher un nombre décimal petit (< 100) après le type
+        for (let c = 3; c < Math.min(cols.length, 8); c++) {
+          const v = cleanNum(cols[c]);
+          if (!isNaN(v) && v > 0 && v < 100 && cols[c].trim().match(/^\d+\.?\d*$/)) {
+            lots = v; break;
+          }
+        }
+
+        // Prix d'entrée : premier grand nombre (>10) après le volume
+        for (let c = 4; c < Math.min(cols.length, 10); c++) {
+          const v = cleanNum(cols[c]);
+          if (!isNaN(v) && v > 10) { entry = v; break; }
+        }
+
+        // Prix de sortie : chercher le deuxième grand nombre
+        let foundFirst = false;
+        for (let c = 4; c < Math.min(cols.length, 14); c++) {
+          const v = cleanNum(cols[c]);
+          if (!isNaN(v) && v > 10) {
+            if (!foundFirst) { foundFirst = true; continue; }
+            exitPrice = v; break;
+          }
+        }
+
+        // Note : chercher une colonne texte qui ressemble à un commentaire
+        for (let c = 3; c < Math.min(cols.length, 7); c++) {
+          const v = cols[c].trim();
+          if (v && !v.match(/^[\d.,\-\s]+$/) && v.toLowerCase() !== 'buy' && v.toLowerCase() !== 'sell' && v !== symbol) {
+            note = v; break;
+          }
+        }
+
+        result.push({ id: Date.now() + i + Math.random(), acc, date, pair: symbol, dir, lots, entry, exit: exitPrice, pnl: profit, note: note || 'Import MT5' });
+      }
+
       return result;
     }
 
-    function parseTV(headers, lines, parseRow) {
-      // Colonnes TradingView Strategy Tester: Trade #, Type, Signal, Date/Time, Price, Contracts, Profit, Cumulative Profit, Run-up, Drawdown
-      const find = (...names) => { for (const n of names) { const i = headers.indexOf(n); if (i !== -1) return i; } return -1; };
-      const iType = find('type', 'side', 'direction');
-      const iDate = find('datetime', 'date', 'time', 'dattime');
-      const iPrice = find('price', 'entryprice', 'entry');
-      const iProfit = find('profit', 'pl', 'pnl', 'netprofit', 'result');
-      const iContracts = find('contracts', 'qty', 'volume', 'lots');
+    function parsePepperstoneTV(allLines) {
+      // Format Pepperstone TradingView order history :
+      // Symbol,Side,Type,Qty,Filled Qty,Limit Price,Stop Price,Avg Fill Price,Status,Update Time,Profit,Gross Profit,Swap,Commission,Order ID
+      // On veut : Status=Filled ET Profit non vide (trades clôturés avec P&L)
 
-      if (iProfit === -1) { return []; }
+      const sep = ',';
+      if (!allLines[0]) return [];
+      const headers = splitCSV(allLines[0], sep).map(h => h.trim().toLowerCase());
+
+      const iSymbol = headers.indexOf('symbol');
+      const iSide = headers.indexOf('side');
+      const iType = headers.indexOf('type');
+      const iQty = headers.indexOf('filled qty');
+      const iPrice = headers.indexOf('avg fill price');
+      const iStatus = headers.indexOf('status');
+      const iTime = headers.indexOf('update time');
+      const iProfit = headers.indexOf('profit');
+      const iComm = headers.indexOf('commission');
+
+      if (iProfit === -1 || iStatus === -1) return [];
 
       const acc = document.getElementById('import-account').value;
       const result = [];
-      // TradingView liste Entry + Exit en lignes séparées, on prend les Exit (qui ont le profit)
-      for (let i = 1; i < lines.length; i++) {
-        const row = parseRow(lines[i]);
-        if (row.length < 3) continue;
-        const profit = parseFloat((row[iProfit] || '').replace(',', '.').replace(/[^0-9.\-]/g, ''));
+
+      for (let i = 1; i < allLines.length; i++) {
+        const line = allLines[i].trim();
+        if (!line) continue;
+        const cols = splitCSV(line, sep);
+
+        // Uniquement les ordres Filled avec un Profit renseigné
+        const status = (cols[iStatus] || '').trim();
+        if (status !== 'Filled') continue;
+
+        const profitRaw = cols[iProfit] ? cols[iProfit].trim() : '';
+        if (!profitRaw) continue;
+        const profit = cleanNum(profitRaw);
         if (isNaN(profit)) continue;
-        const type = (iType !== -1 ? row[iType] : '').toLowerCase();
-        // Prendre uniquement les lignes "exit" ou "close" qui ont un P&L
-        if (type && (type.includes('entry') || type === 'long' || type === 'short')) continue;
 
-        const rawDate = iDate !== -1 ? row[iDate] : '';
-        const date = rawDate ? rawDate.split(' ')[0].replace(/\//g, '-') : new Date().toISOString().split('T')[0];
-        const dir = type.includes('short') || type.includes('sell') ? 'SELL' : 'BUY';
-        const lots = iContracts !== -1 ? parseFloat((row[iContracts] || '1').replace(',', '.')) || 1 : 1;
-        const price = iPrice !== -1 ? parseFloat((row[iPrice] || '0').replace(',', '.')) || 0 : 0;
+        // Exclure les TP/SL liés (Order ID commence par TP: ou SL:)
+        const orderId = cols[cols.length - 1] ? cols[cols.length - 1].trim() : '';
+        if (orderId.startsWith('TP:') || orderId.startsWith('SL:') || orderId.startsWith('PTP:') || orderId.startsWith('PSL:')) continue;
 
-        result.push({ id: Date.now() + i, acc, date, pair: 'XAUUSD', dir, lots, entry: price, exit: 0, pnl: profit, note: 'Import TradingView' });
+        const rawTime = iTime !== -1 ? cols[iTime].trim() : '';
+        const date = rawTime ? rawTime.split(' ')[0] : new Date().toISOString().split('T')[0];
+        const symbol = iSymbol !== -1 ? cols[iSymbol].trim() : 'XAUUSD';
+        const side = iSide !== -1 ? cols[iSide].trim() : 'Buy';
+        const dir = side.toLowerCase() === 'sell' ? 'SELL' : 'BUY';
+        const lots = iQty !== -1 ? cleanNum(cols[iQty]) || 0 : 0;
+        const price = iPrice !== -1 ? cleanNum(cols[iPrice]) || 0 : 0;
+        const comm = iComm !== -1 ? cleanNum(cols[iComm]) || 0 : 0;
+
+        result.push({ id: Date.now() + i + Math.random(), acc, date, pair: symbol, dir, lots, entry: price, exit: 0, pnl: profit, note: 'Import TV' });
       }
+
       return result;
     }
 
