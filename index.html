@@ -1,565 +1,1515 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Trading Dashboard</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-<style>
-  :root {
-    --bg: #0f0f0f;
-    --bg2: #161616;
-    --bg3: #1e1e1e;
-    --border: rgba(255,255,255,0.08);
-    --border2: rgba(255,255,255,0.14);
-    --text: #f0f0f0;
-    --text2: #888;
-    --text3: #555;
-    --ftmo: #4a90d9;
-    --demo: #2db57a;
-    --tv: #9b6dff;
-    --green: #2db57a;
-    --red: #e05a4e;
-    --amber: #e8a020;
-    --radius: 10px;
-    --radius-sm: 6px;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
-  
-  header { padding: 1.25rem 2rem; border-bottom: 0.5px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-  .logo { font-size: 15px; font-weight: 600; letter-spacing: -.3px; }
-  .logo span { color: var(--text2); font-weight: 400; }
-  .header-date { font-size: 12px; color: var(--text2); }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trading Dashboard</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <style>
+    :root {
+      --bg: #0f0f0f;
+      --bg2: #161616;
+      --bg3: #1e1e1e;
+      --border: rgba(255, 255, 255, 0.08);
+      --border2: rgba(255, 255, 255, 0.14);
+      --text: #f0f0f0;
+      --text2: #888;
+      --text3: #555;
+      --ftmo: #4a90d9;
+      --demo: #2db57a;
+      --tv: #9b6dff;
+      --green: #2db57a;
+      --red: #e05a4e;
+      --amber: #e8a020;
+      --radius: 10px;
+      --radius-sm: 6px;
+    }
 
-  .container { max-width: 1100px; margin: 0 auto; padding: 1.5rem 2rem; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-  .tabs { display: flex; gap: 4px; margin-bottom: 1.5rem; background: var(--bg2); border-radius: var(--radius); padding: 4px; width: fit-content; }
-  .tab { padding: 7px 16px; font-size: 13px; font-weight: 500; border: none; background: none; cursor: pointer; color: var(--text2); border-radius: var(--radius-sm); transition: all .15s; }
-  .tab.active { background: var(--bg3); color: var(--text); }
-  .tab:hover:not(.active) { color: var(--text); }
-  .tab i { margin-right: 5px; font-size: 14px; vertical-align: -2px; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+    }
 
-  .view { display: none; } .view.active { display: block; }
+    header {
+      padding: 1.25rem 2rem;
+      border-bottom: 0.5px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
 
-  .accounts-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 1.25rem; }
-  .account-card { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1.1rem 1.25rem; position: relative; overflow: hidden; }
-  .account-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
-  .account-card.ftmo::before { background: var(--ftmo); }
-  .account-card.demo::before { background: var(--demo); }
-  .account-card.tv::before { background: var(--tv); }
-  .acc-badge { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 20px; display: inline-block; margin-bottom: 10px; letter-spacing: .04em; text-transform: uppercase; }
-  .ftmo .acc-badge { background: rgba(74,144,217,0.15); color: var(--ftmo); }
-  .demo .acc-badge { background: rgba(45,181,122,0.15); color: var(--demo); }
-  .tv .acc-badge { background: rgba(155,109,255,0.15); color: var(--tv); }
-  .acc-name { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 2px; }
-  .acc-sub { font-size: 11px; color: var(--text3); margin-bottom: 14px; }
-  .acc-balance { font-size: 24px; font-weight: 600; color: var(--text); margin-bottom: 3px; letter-spacing: -.5px; }
-  .acc-pnl { font-size: 12px; font-weight: 500; }
-  .acc-pnl.pos { color: var(--green); } .acc-pnl.neg { color: var(--red); } .acc-pnl.flat { color: var(--text2); }
-  .acc-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 14px; padding-top: 12px; border-top: 0.5px solid var(--border); }
-  .stat-mini { text-align: center; }
-  .stat-mini-val { font-size: 14px; font-weight: 600; color: var(--text); }
-  .stat-mini-lbl { font-size: 10px; color: var(--text2); margin-top: 1px; }
+    .logo {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -.3px;
+    }
 
-  .metrics-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 1.5rem; }
-  .metric-card { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1rem 1.1rem; }
-  .metric-val { font-size: 20px; font-weight: 600; color: var(--text); letter-spacing: -.4px; }
-  .metric-lbl { font-size: 11px; color: var(--text2); margin-top: 3px; }
+    .logo span {
+      color: var(--text2);
+      font-weight: 400;
+    }
 
-  .section-title { font-size: 11px; font-weight: 600; color: var(--text2); margin-bottom: 10px; text-transform: uppercase; letter-spacing: .08em; }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
 
-  .trade-table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
-  .trade-table th { text-align: left; font-size: 11px; font-weight: 600; color: var(--text2); padding: 8px 12px; border-bottom: 0.5px solid var(--border); background: var(--bg2); letter-spacing: .04em; text-transform: uppercase; }
-  .trade-table td { padding: 9px 12px; border-bottom: 0.5px solid var(--border); color: var(--text); vertical-align: middle; }
-  .trade-table tr:last-child td { border-bottom: none; }
-  .trade-table tr:hover td { background: var(--bg3); }
-  .trade-table-wrap { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .header-date {
+      font-size: 12px;
+      color: var(--text2);
+    }
 
-  .badge-account { font-size: 10px; padding: 2px 8px; border-radius: 20px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
-  .badge-ftmo { background: rgba(74,144,217,0.15); color: var(--ftmo); }
-  .badge-demo { background: rgba(45,181,122,0.15); color: var(--demo); }
-  .badge-tv { background: rgba(155,109,255,0.15); color: var(--tv); }
-  .badge-buy { background: rgba(45,181,122,0.15); color: var(--green); font-size: 10px; padding: 2px 8px; border-radius: 4px; font-weight: 600; }
-  .badge-sell { background: rgba(224,90,78,0.15); color: var(--red); font-size: 10px; padding: 2px 8px; border-radius: 4px; font-weight: 600; }
-  .pnl-pos { color: var(--green); font-weight: 600; } .pnl-neg { color: var(--red); font-weight: 600; }
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 1.5rem 2rem;
+    }
 
-  .add-trade-form { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1.5rem; }
-  .form-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 12px; }
-  .form-group { display: flex; flex-direction: column; gap: 5px; }
-  .form-label { font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .05em; }
-  .form-group select, .form-group input {
-    width: 100%; font-size: 13px; padding: 8px 10px;
-    border-radius: var(--radius-sm); border: 0.5px solid var(--border2);
-    background: var(--bg3); color: var(--text);
-    outline: none; transition: border-color .15s;
-  }
-  .form-group select:focus, .form-group input:focus { border-color: rgba(255,255,255,0.3); }
-  .btn-add { padding: 8px 20px; font-size: 13px; font-weight: 600; cursor: pointer; border-radius: var(--radius-sm); border: none; background: var(--text); color: var(--bg); transition: opacity .15s; }
-  .btn-add:hover { opacity: .85; }
-  .btn-del { background: none; border: none; cursor: pointer; color: var(--text3); font-size: 16px; padding: 3px 7px; border-radius: 4px; transition: all .15s; }
-  .btn-del:hover { color: var(--red); background: rgba(224,90,78,0.1); }
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 1.5rem;
+      background: var(--bg2);
+      border-radius: var(--radius);
+      padding: 4px;
+      width: fit-content;
+    }
 
-  .filter-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-  .filter-row select { font-size: 12px; padding: 6px 10px; border-radius: var(--radius-sm); border: 0.5px solid var(--border2); background: var(--bg2); color: var(--text); margin-left: 6px; cursor: pointer; }
+    .tab {
+      padding: 7px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      border: none;
+      background: none;
+      cursor: pointer;
+      color: var(--text2);
+      border-radius: var(--radius-sm);
+      transition: all .15s;
+    }
 
-  .progress-bar { height: 5px; background: var(--bg3); border-radius: 3px; overflow: hidden; margin-top: 8px; }
-  .progress-fill { height: 100%; border-radius: 3px; transition: width .4s, background .3s; }
+    .tab.active {
+      background: var(--bg3);
+      color: var(--text);
+    }
 
-  .ftmo-rules { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1.5rem; }
-  .rule-card { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1rem 1.1rem; }
-  .rule-name { font-size: 11px; color: var(--text2); margin-bottom: 5px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
-  .rule-val { font-size: 16px; font-weight: 600; color: var(--text); }
-  .rule-limit { font-size: 11px; color: var(--text3); margin-top: 2px; }
+    .tab:hover:not(.active) {
+      color: var(--text);
+    }
 
-  .ftmo-params { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-top: 1.5rem; }
+    .tab i {
+      margin-right: 5px;
+      font-size: 14px;
+      vertical-align: -2px;
+    }
 
-  .status-ok { color: var(--green); } .status-warn { color: var(--amber); } .status-fail { color: var(--red); }
-  .ftmo-status-box { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1rem 1.25rem; font-size: 13px; }
+    .view {
+      display: none;
+    }
 
-  .chart-wrap { position: relative; width: 100%; height: 240px; margin-bottom: 1rem; background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1rem; }
-  .chart-legend { display: flex; gap: 16px; font-size: 12px; color: var(--text2); margin-bottom: 1.5rem; flex-wrap: wrap; }
-  .chart-legend span { display: flex; align-items: center; gap: 6px; }
-  .legend-dot { width: 10px; height: 3px; border-radius: 2px; display: inline-block; }
+    .view.active {
+      display: block;
+    }
 
-  .stats-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 1.25rem; }
-  .stats-detail { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-  .stats-detail-row { display: flex; gap: 24px; align-items: center; padding: 12px 16px; border-bottom: 0.5px solid var(--border); flex-wrap: wrap; }
-  .stats-detail-row:last-child { border-bottom: none; }
+    .accounts-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 1.25rem;
+    }
 
-  .empty-state { text-align: center; padding: 2.5rem; color: var(--text3); font-size: 13px; }
+    .account-card {
+      background: var(--bg2);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.1rem 1.25rem;
+      position: relative;
+      overflow: hidden;
+    }
 
-  @media (max-width: 700px) {
-    .accounts-grid { grid-template-columns: 1fr; }
-    .metrics-row { grid-template-columns: repeat(2,1fr); }
-    .form-grid { grid-template-columns: repeat(2,1fr); }
-    .ftmo-rules { grid-template-columns: 1fr; }
-    .container { padding: 1rem; }
-    header { padding: 1rem; }
-  }
-</style>
-</head>
-<body>
+    .account-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+    }
 
-<header>
-  <div class="logo">Trading <span>Dashboard</span></div>
-  <div class="header-date" id="header-date"></div>
-</header>
+    .account-card.ftmo::before {
+      background: var(--ftmo);
+    }
 
-<div class="container">
-  <div class="tabs">
-    <button class="tab active" onclick="switchTab('overview')"><i class="ti ti-layout-dashboard"></i>Vue globale</button>
-    <button class="tab" onclick="switchTab('trades')"><i class="ti ti-list"></i>Trades</button>
-    <button class="tab" onclick="switchTab('ftmo')"><i class="ti ti-shield-check"></i>FTMO</button>
-    <button class="tab" onclick="switchTab('stats')"><i class="ti ti-chart-bar"></i>Stats</button>
-  </div>
+    .account-card.demo::before {
+      background: var(--demo);
+    }
 
-  <!-- VUE GLOBALE -->
-  <div id="view-overview" class="view active">
-    <div class="accounts-grid">
-      <div class="account-card ftmo">
-        <span class="acc-badge">FTMO Challenge</span>
-        <div class="acc-name">FTMO $10K</div>
-        <div class="acc-sub">Prop firm · Phase 1</div>
-        <div class="acc-balance" id="ftmo-balance">$10 000.00</div>
-        <div class="acc-pnl flat" id="ftmo-pnl">$0.00 aujourd'hui</div>
-        <div class="acc-stats">
-          <div class="stat-mini"><div class="stat-mini-val" id="ftmo-wr">—</div><div class="stat-mini-lbl">Win rate</div></div>
-          <div class="stat-mini"><div class="stat-mini-val" id="ftmo-dd">0%</div><div class="stat-mini-lbl">Drawdown</div></div>
-        </div>
-      </div>
-      <div class="account-card demo">
-        <span class="acc-badge">Demo</span>
-        <div class="acc-name">Pepperstone Demo</div>
-        <div class="acc-sub">MT5 · XAUUSD</div>
-        <div class="acc-balance" id="demo-balance">$10 000.00</div>
-        <div class="acc-pnl flat" id="demo-pnl">$0.00 aujourd'hui</div>
-        <div class="acc-stats">
-          <div class="stat-mini"><div class="stat-mini-val" id="demo-wr">—</div><div class="stat-mini-lbl">Win rate</div></div>
-          <div class="stat-mini"><div class="stat-mini-val" id="demo-dd">0%</div><div class="stat-mini-lbl">Drawdown</div></div>
-        </div>
-      </div>
-      <div class="account-card tv">
-        <span class="acc-badge">Live</span>
-        <div class="acc-name">Pepperstone TV</div>
-        <div class="acc-sub">TradingView · Multi-actifs</div>
-        <div class="acc-balance" id="tv-balance">$10 000.00</div>
-        <div class="acc-pnl flat" id="tv-pnl">$0.00 aujourd'hui</div>
-        <div class="acc-stats">
-          <div class="stat-mini"><div class="stat-mini-val" id="tv-wr">—</div><div class="stat-mini-lbl">Win rate</div></div>
-          <div class="stat-mini"><div class="stat-mini-val" id="tv-dd">0%</div><div class="stat-mini-lbl">Drawdown</div></div>
-        </div>
-      </div>
-    </div>
+    .account-card.tv::before {
+      background: var(--tv);
+    }
 
-    <div class="metrics-row">
-      <div class="metric-card"><div class="metric-val" id="total-pnl">$0.00</div><div class="metric-lbl">P&L total</div></div>
-      <div class="metric-card"><div class="metric-val" id="total-trades">0</div><div class="metric-lbl">Trades enregistrés</div></div>
-      <div class="metric-card"><div class="metric-val" id="global-wr">—</div><div class="metric-lbl">Win rate global</div></div>
-      <div class="metric-card"><div class="metric-val" id="best-account">—</div><div class="metric-lbl">Meilleur compte</div></div>
-    </div>
+    .acc-badge {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 20px;
+      display: inline-block;
+      margin-bottom: 10px;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
 
-    <div class="section-title">Derniers trades</div>
-    <div class="trade-table-wrap" id="recent-trades-wrap">
-      <div class="empty-state">Aucun trade — va dans l'onglet Trades pour commencer.</div>
-    </div>
-  </div>
+    .ftmo .acc-badge {
+      background: rgba(74, 144, 217, 0.15);
+      color: var(--ftmo);
+    }
 
-  <!-- TRADES -->
-  <div id="view-trades" class="view">
-    <div class="add-trade-form">
-      <div class="section-title" style="margin-bottom:14px">Ajouter un trade</div>
-      <div class="form-grid">
-        <div class="form-group"><label class="form-label">Compte</label>
-          <select id="f-account">
-            <option value="ftmo">FTMO Challenge</option>
-            <option value="demo">Pepperstone Demo</option>
-            <option value="tv">Pepperstone TV</option>
-          </select>
-        </div>
-        <div class="form-group"><label class="form-label">Date</label><input type="date" id="f-date"></div>
-        <div class="form-group"><label class="form-label">Paire</label><input type="text" id="f-pair" placeholder="XAUUSD" value="XAUUSD"></div>
-        <div class="form-group"><label class="form-label">Direction</label>
-          <select id="f-dir"><option value="BUY">BUY</option><option value="SELL">SELL</option></select>
-        </div>
-        <div class="form-group"><label class="form-label">Lots</label><input type="number" id="f-lots" placeholder="0.01" step="0.01" min="0"></div>
-        <div class="form-group"><label class="form-label">Entrée</label><input type="number" id="f-entry" placeholder="2350.00" step="0.01"></div>
-        <div class="form-group"><label class="form-label">Sortie</label><input type="number" id="f-exit" placeholder="2365.00" step="0.01"></div>
-        <div class="form-group"><label class="form-label">P&L ($)</label><input type="number" id="f-pnl" placeholder="+150.00" step="0.01"></div>
-      </div>
-      <div style="display:flex;align-items:flex-end;gap:10px">
-        <div class="form-group" style="flex:1"><label class="form-label">Note (optionnel)</label><input type="text" id="f-note" placeholder="Ex: London breakout, SL trop serré..."></div>
-        <button class="btn-add" onclick="addTrade()">+ Ajouter</button>
-      </div>
-    </div>
+    .demo .acc-badge {
+      background: rgba(45, 181, 122, 0.15);
+      color: var(--demo);
+    }
 
-    <div class="filter-row">
-      <div class="section-title" style="margin-bottom:0">Historique ({{ count }} trades)</div>
-      <div>
-        <select id="filter-account" onchange="renderTradeTable()">
-          <option value="all">Tous les comptes</option>
-          <option value="ftmo">FTMO</option>
-          <option value="demo">Demo</option>
-          <option value="tv">TV</option>
-        </select>
-        <select id="filter-result" onchange="renderTradeTable()">
-          <option value="all">Tous</option>
-          <option value="win">Wins</option>
-          <option value="loss">Losses</option>
-        </select>
-      </div>
-    </div>
-    <div class="trade-table-wrap" id="trade-table-wrap">
-      <div class="empty-state">Aucun trade pour l'instant.</div>
-    </div>
-  </div>
+    .tv .acc-badge {
+      background: rgba(155, 109, 255, 0.15);
+      color: var(--tv);
+    }
 
-  <!-- FTMO -->
-  <div id="view-ftmo" class="view">
-    <div class="section-title">Règles du challenge FTMO $10K — Phase 1</div>
-    <div class="ftmo-rules">
-      <div class="rule-card">
-        <div class="rule-name">Objectif de profit</div>
-        <div class="rule-val" id="ftmo-target-val">$0 / $1 000</div>
-        <div class="rule-limit">Minimum requis : +10%</div>
-        <div class="progress-bar"><div class="progress-fill" id="ftmo-target-bar" style="width:0%;background:var(--green)"></div></div>
-      </div>
-      <div class="rule-card">
-        <div class="rule-name">Max Daily Loss</div>
-        <div class="rule-val" id="ftmo-daily-val">$0 / $500</div>
-        <div class="rule-limit">Limite journalière : -5%</div>
-        <div class="progress-bar"><div class="progress-fill" id="ftmo-daily-bar" style="width:0%;background:var(--green)"></div></div>
-      </div>
-      <div class="rule-card">
-        <div class="rule-name">Max Overall Loss</div>
-        <div class="rule-val" id="ftmo-overall-val">$0 / $1 000</div>
-        <div class="rule-limit">Limite totale : -10%</div>
-        <div class="progress-bar"><div class="progress-fill" id="ftmo-overall-bar" style="width:0%;background:var(--green)"></div></div>
-      </div>
-      <div class="rule-card">
-        <div class="rule-name">Jours de trading min</div>
-        <div class="rule-val" id="ftmo-days-val">0 / 4 jours</div>
-        <div class="rule-limit">Minimum 4 jours actifs</div>
-        <div class="progress-bar"><div class="progress-fill" id="ftmo-days-bar" style="width:0%;background:var(--ftmo)"></div></div>
-      </div>
-    </div>
+    .acc-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 2px;
+    }
 
-    <div class="section-title">Statut</div>
-    <div class="ftmo-status-box" id="ftmo-status-wrap">
-      <span style="color:var(--text2)">Aucun trade enregistré sur le compte FTMO.</span>
-    </div>
+    .acc-sub {
+      font-size: 11px;
+      color: var(--text3);
+      margin-bottom: 14px;
+    }
 
-    <div class="section-title" style="margin-top:1.5rem">Paramètres</div>
-    <div class="ftmo-params">
-      <div class="form-group"><label class="form-label">Capital initial ($)</label><input type="number" id="ftmo-capital" value="10000" onchange="updateFTMO()"></div>
-      <div class="form-group"><label class="form-label">Phase</label>
-        <select id="ftmo-phase" onchange="updateFTMO()">
-          <option value="1">Phase 1 — target 10%</option>
-          <option value="2">Phase 2 — target 5%</option>
-          <option value="funded">Funded</option>
-        </select>
-      </div>
-      <div class="form-group"><label class="form-label">Date de début</label><input type="date" id="ftmo-start"></div>
-    </div>
-  </div>
+    .acc-balance {
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 3px;
+      letter-spacing: -.5px;
+    }
 
-  <!-- STATS -->
-  <div id="view-stats" class="view">
-    <div class="stats-grid">
-      <div class="metric-card"><div class="metric-val" id="s-wr">—</div><div class="metric-lbl">Win rate global</div></div>
-      <div class="metric-card"><div class="metric-val" id="s-rr">—</div><div class="metric-lbl">Ratio R:R moyen</div></div>
-      <div class="metric-card"><div class="metric-val" id="s-avg-win">—</div><div class="metric-lbl">Gain moyen</div></div>
-    </div>
-    <div class="stats-grid">
-      <div class="metric-card"><div class="metric-val" id="s-avg-loss">—</div><div class="metric-lbl">Perte moyenne</div></div>
-      <div class="metric-card"><div class="metric-val" id="s-streak">—</div><div class="metric-lbl">Série gagnante max</div></div>
-      <div class="metric-card"><div class="metric-val" id="s-best-pair">—</div><div class="metric-lbl">Meilleure paire</div></div>
-    </div>
+    .acc-pnl {
+      font-size: 12px;
+      font-weight: 500;
+    }
 
-    <div class="section-title">Évolution P&L cumulé</div>
-    <div class="chart-wrap"><canvas id="pnlChart" role="img" aria-label="Courbe P&L cumulé par compte">Évolution du P&L cumulé.</canvas></div>
-    <div class="chart-legend">
-      <span><span class="legend-dot" style="background:var(--ftmo)"></span>FTMO</span>
-      <span><span class="legend-dot" style="background:var(--demo)"></span>Demo</span>
-      <span><span class="legend-dot" style="background:var(--tv)"></span>TV</span>
-    </div>
+    .acc-pnl.pos {
+      color: var(--green);
+    }
 
-    <div class="section-title">Détail par compte</div>
-    <div class="stats-detail" id="stats-detail-wrap">
-      <div class="empty-state">Ajoutez des trades pour voir les statistiques.</div>
-    </div>
-  </div>
-</div>
+    .acc-pnl.neg {
+      color: var(--red);
+    }
 
-<script>
-let trades = JSON.parse(localStorage.getItem('trading_dashboard_v2') || '[]');
-let pnlChart = null;
+    .acc-pnl.flat {
+      color: var(--text2);
+    }
 
-const STARTS = { ftmo: 10000, demo: 10000, tv: 10000 };
+    .acc-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 0.5px solid var(--border);
+    }
 
-document.getElementById('header-date').textContent = new Date().toLocaleDateString('fr-FR', {weekday:'long',day:'numeric',month:'long',year:'numeric'});
-document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
+    .stat-mini {
+      text-align: center;
+    }
 
-function save() { localStorage.setItem('trading_dashboard_v2', JSON.stringify(trades)); }
-function fmt(n) { return (n >= 0 ? '+' : '') + '$' + Math.abs(n).toFixed(2); }
+    .stat-mini-val {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+    }
 
-function switchTab(id) {
-  document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', ['overview','trades','ftmo','stats'][i] === id));
-  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.getElementById('view-' + id).classList.add('active');
-  if (id === 'stats') renderChart();
-}
+    .stat-mini-lbl {
+      font-size: 10px;
+      color: var(--text2);
+      margin-top: 1px;
+    }
 
-function addTrade() {
-  const pnl = parseFloat(document.getElementById('f-pnl').value);
-  if (isNaN(pnl)) { alert('Le champ P&L est obligatoire.'); return; }
-  trades.push({
-    id: Date.now(),
-    acc: document.getElementById('f-account').value,
-    date: document.getElementById('f-date').value || new Date().toISOString().split('T')[0],
-    pair: document.getElementById('f-pair').value || 'XAUUSD',
-    dir: document.getElementById('f-dir').value,
-    lots: parseFloat(document.getElementById('f-lots').value) || 0,
-    entry: parseFloat(document.getElementById('f-entry').value) || 0,
-    exit: parseFloat(document.getElementById('f-exit').value) || 0,
-    pnl,
-    note: document.getElementById('f-note').value
-  });
-  save(); renderAll();
-  ['f-pnl','f-entry','f-exit','f-note','f-lots'].forEach(id => document.getElementById(id).value = '');
-}
+    .metrics-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 1.5rem;
+    }
 
-function deleteTrade(id) {
-  if (!confirm('Supprimer ce trade ?')) return;
-  trades = trades.filter(t => t.id !== id);
-  save(); renderAll();
-}
+    .metric-card {
+      background: var(--bg2);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.1rem;
+    }
 
-function renderAll() { renderCards(); renderTradeTable(); renderRecentTrades(); updateFTMO(); renderStats(); }
+    .metric-val {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: -.4px;
+    }
 
-function renderCards() {
-  ['ftmo','demo','tv'].forEach(acc => {
-    const ts = trades.filter(t => t.acc === acc);
-    const total = ts.reduce((s, t) => s + t.pnl, 0);
-    const today = new Date().toISOString().split('T')[0];
-    const todayPnl = ts.filter(t => t.date === today).reduce((s, t) => s + t.pnl, 0);
-    const wins = ts.filter(t => t.pnl > 0).length;
-    const bal = STARTS[acc] + total;
-    let minCumul = 0, cumul = 0;
-    ts.forEach(t => { cumul += t.pnl; if (cumul < minCumul) minCumul = cumul; });
-    const ddPct = ts.length ? (Math.abs(minCumul) / STARTS[acc] * 100).toFixed(1) + '%' : '0%';
-    document.getElementById(acc + '-balance').textContent = '$' + bal.toLocaleString('fr-FR', {minimumFractionDigits:2,maximumFractionDigits:2});
-    const pEl = document.getElementById(acc + '-pnl');
-    pEl.textContent = fmt(todayPnl) + ' aujourd\'hui';
-    pEl.className = 'acc-pnl ' + (todayPnl > 0 ? 'pos' : todayPnl < 0 ? 'neg' : 'flat');
-    document.getElementById(acc + '-wr').textContent = ts.length ? Math.round(wins / ts.length * 100) + '%' : '—';
-    document.getElementById(acc + '-dd').textContent = ddPct;
-  });
-  const allPnl = trades.reduce((s, t) => s + t.pnl, 0);
-  const tEl = document.getElementById('total-pnl');
-  tEl.textContent = fmt(allPnl);
-  tEl.style.color = allPnl > 0 ? 'var(--green)' : allPnl < 0 ? 'var(--red)' : 'var(--text)';
-  document.getElementById('total-trades').textContent = trades.length;
-  const wins = trades.filter(t => t.pnl > 0).length;
-  document.getElementById('global-wr').textContent = trades.length ? Math.round(wins / trades.length * 100) + '%' : '—';
-  if (trades.length) {
-    const best = ['ftmo','demo','tv'].reduce((b, a) => {
-      const p = trades.filter(t => t.acc === a).reduce((s, t) => s + t.pnl, 0);
-      const bp = trades.filter(t => t.acc === b).reduce((s, t) => s + t.pnl, 0);
-      return p > bp ? a : b;
-    }, 'ftmo');
-    document.getElementById('best-account').textContent = best === 'ftmo' ? 'FTMO' : best === 'demo' ? 'Demo' : 'TV';
-  } else {
-    document.getElementById('best-account').textContent = '—';
-  }
-}
+    .metric-lbl {
+      font-size: 11px;
+      color: var(--text2);
+      margin-top: 3px;
+    }
 
-function tradeRow(t, showDel=true) {
-  return `<tr>
-    <td style="font-size:11px;color:var(--text2)">${t.date}</td>
-    <td><span class="badge-account badge-${t.acc}">${t.acc==='ftmo'?'FTMO':t.acc==='demo'?'Demo':'TV'}</span></td>
-    <td style="font-weight:600">${t.pair}</td>
-    <td><span class="badge-${t.dir.toLowerCase()}">${t.dir}</span></td>
-    <td style="color:var(--text2)">${t.lots||'—'}</td>
-    <td style="color:var(--text2)">${t.entry||'—'}</td>
-    <td style="color:var(--text2)">${t.exit||'—'}</td>
-    <td class="${t.pnl>=0?'pnl-pos':'pnl-neg'}">${fmt(t.pnl)}</td>
-    <td style="font-size:11px;color:var(--text2);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.note||''}</td>
-    ${showDel?`<td><button class="btn-del" onclick="deleteTrade(${t.id})" title="Supprimer"><i class="ti ti-trash"></i></button></td>`:''}
-  </tr>`;
-}
+    .section-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text2);
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
 
-function tableHeader(showDel=true) {
-  return `<thead><tr>
-    <th style="width:75px">Date</th><th style="width:80px">Compte</th><th style="width:75px">Paire</th>
-    <th style="width:55px">Dir.</th><th style="width:50px">Lots</th><th style="width:70px">Entrée</th>
-    <th style="width:70px">Sortie</th><th style="width:85px">P&L</th><th>Note</th>
-    ${showDel?'<th style="width:35px"></th>':''}
-  </tr></thead>`;
-}
+    .trade-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      table-layout: fixed;
+    }
 
-function renderTradeTable() {
-  const accF = document.getElementById('filter-account').value;
-  const resF = document.getElementById('filter-result').value;
-  let filtered = trades.slice().reverse();
-  if (accF !== 'all') filtered = filtered.filter(t => t.acc === accF);
-  if (resF === 'win') filtered = filtered.filter(t => t.pnl > 0);
-  if (resF === 'loss') filtered = filtered.filter(t => t.pnl <= 0);
-  const wrap = document.getElementById('trade-table-wrap');
-  document.querySelector('.filter-row .section-title').textContent = `Historique (${filtered.length} trade${filtered.length>1?'s':''})`;
-  if (!filtered.length) { wrap.innerHTML = '<div class="empty-state">Aucun trade correspondant.</div>'; return; }
-  wrap.innerHTML = `<table class="trade-table">${tableHeader()}<tbody>${filtered.map(t => tradeRow(t)).join('')}</tbody></table>`;
-}
+    .trade-table th {
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text2);
+      padding: 8px 12px;
+      border-bottom: 0.5px solid var(--border);
+      background: var(--bg2);
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
 
-function renderRecentTrades() {
-  const wrap = document.getElementById('recent-trades-wrap');
-  const recent = trades.slice(-5).reverse();
-  if (!recent.length) { wrap.innerHTML = '<div class="empty-state">Aucun trade — va dans l\'onglet Trades pour commencer.</div>'; return; }
-  wrap.innerHTML = `<table class="trade-table">${tableHeader(false)}<tbody>${recent.map(t => tradeRow(t, false)).join('')}</tbody></table>`;
-}
+    .trade-table td {
+      padding: 9px 12px;
+      border-bottom: 0.5px solid var(--border);
+      color: var(--text);
+      vertical-align: middle;
+    }
 
-function updateFTMO() {
-  const capital = parseFloat(document.getElementById('ftmo-capital').value) || 10000;
-  const phase = document.getElementById('ftmo-phase').value;
-  const targetPct = phase === '1' ? 0.10 : phase === '2' ? 0.05 : 0;
-  const targetAmt = capital * targetPct;
-  const maxDaily = capital * 0.05;
-  const maxOverall = capital * 0.10;
-  const ts = trades.filter(t => t.acc === 'ftmo');
-  const totalPnl = ts.reduce((s, t) => s + t.pnl, 0);
-  const today = new Date().toISOString().split('T')[0];
-  const todayLoss = Math.abs(Math.min(0, ts.filter(t => t.date === today).reduce((s, t) => s + t.pnl, 0)));
-  const activeDays = new Set(ts.map(t => t.date)).size;
+    .trade-table tr:last-child td {
+      border-bottom: none;
+    }
 
-  document.getElementById('ftmo-target-val').textContent = '$' + Math.max(0, totalPnl).toFixed(0) + ' / $' + targetAmt.toFixed(0);
-  document.getElementById('ftmo-daily-val').textContent = '$' + todayLoss.toFixed(0) + ' / $' + maxDaily.toFixed(0);
-  document.getElementById('ftmo-overall-val').textContent = '$' + Math.abs(Math.min(0, totalPnl)).toFixed(0) + ' / $' + maxOverall.toFixed(0);
-  document.getElementById('ftmo-days-val').textContent = activeDays + ' / 4 jours';
+    .trade-table tr:hover td {
+      background: var(--bg3);
+    }
 
-  const tPct = targetAmt > 0 ? Math.min(100, Math.max(0, totalPnl) / targetAmt * 100) : 0;
-  const dPct = Math.min(100, todayLoss / maxDaily * 100);
-  const oPct = Math.min(100, Math.abs(Math.min(0, totalPnl)) / maxOverall * 100);
-  document.getElementById('ftmo-target-bar').style.width = tPct + '%';
-  document.getElementById('ftmo-daily-bar').style.width = dPct + '%';
-  document.getElementById('ftmo-daily-bar').style.background = dPct > 80 ? 'var(--red)' : dPct > 60 ? 'var(--amber)' : 'var(--green)';
-  document.getElementById('ftmo-overall-bar').style.width = oPct + '%';
-  document.getElementById('ftmo-overall-bar').style.background = oPct > 80 ? 'var(--red)' : oPct > 60 ? 'var(--amber)' : 'var(--green)';
-  document.getElementById('ftmo-days-bar').style.width = Math.min(100, activeDays / 4 * 100) + '%';
+    .trade-table-wrap {
+      background: var(--bg2);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
 
-  const sw = document.getElementById('ftmo-status-wrap');
-  if (!ts.length) { sw.innerHTML = '<span style="color:var(--text2)">Aucun trade enregistré sur le compte FTMO.</span>'; return; }
-  const failed = totalPnl <= -maxOverall || todayLoss >= maxDaily;
-  const passed = phase !== 'funded' && totalPnl >= targetAmt && activeDays >= 4;
-  sw.innerHTML = failed
-    ? '<span class="status-fail"><i class="ti ti-alert-circle"></i> Challenge échoué — limite de perte atteinte.</span>'
-    : passed
-    ? '<span class="status-ok"><i class="ti ti-circle-check"></i> Objectifs atteints ! Tu peux passer à la phase suivante.</span>'
-    : `<span>Challenge en cours — P&L : <strong class="${totalPnl>=0?'status-ok':'status-fail'}">${fmt(totalPnl)}</strong> &nbsp;·&nbsp; Jours actifs : <strong>${activeDays}/4</strong> &nbsp;·&nbsp; Daily loss aujourd'hui : <strong class="${todayLoss>maxDaily*0.6?'status-warn':''}">$${todayLoss.toFixed(0)}</strong></span>`;
-}
+    .badge-account {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
 
-function renderStats() {
-  const wins = trades.filter(t => t.pnl > 0);
-  const losses = trades.filter(t => t.pnl < 0);
-  const wr = trades.length ? Math.round(wins.length / trades.length * 100) + '%' : '—';
-  const avgWin = wins.length ? (wins.reduce((s, t) => s + t.pnl, 0) / wins.length) : null;
-  const avgLoss = losses.length ? (losses.reduce((s, t) => s + t.pnl, 0) / losses.length) : null;
-  const rr = avgWin !== null && avgLoss !== null ? (Math.abs(avgWin) / Math.abs(avgLoss)).toFixed(2) : '—';
-  let maxStreak = 0, cur = 0;
-  trades.forEach(t => { if (t.pnl > 0) { cur++; maxStreak = Math.max(maxStreak, cur); } else cur = 0; });
-  const pairs = {};
-  trades.forEach(t => { pairs[t.pair] = (pairs[t.pair] || 0) + t.pnl; });
-  const bestPair = Object.keys(pairs).length ? Object.keys(pairs).reduce((a, b) => pairs[a] > pairs[b] ? a : b) : '—';
-  document.getElementById('s-wr').textContent = wr;
-  document.getElementById('s-rr').textContent = rr;
-  document.getElementById('s-avg-win').textContent = avgWin !== null ? '+$' + avgWin.toFixed(2) : '—';
-  document.getElementById('s-avg-loss').textContent = avgLoss !== null ? '-$' + Math.abs(avgLoss).toFixed(2) : '—';
-  document.getElementById('s-streak').textContent = maxStreak || '—';
-  document.getElementById('s-best-pair').textContent = bestPair;
+    .badge-ftmo {
+      background: rgba(74, 144, 217, 0.15);
+      color: var(--ftmo);
+    }
 
-  const detail = document.getElementById('stats-detail-wrap');
-  if (!trades.length) { detail.innerHTML = '<div class="empty-state">Ajoutez des trades pour voir les statistiques.</div>'; return; }
-  detail.innerHTML = ['ftmo','demo','tv'].map(acc => {
-    const ts = trades.filter(t => t.acc === acc);
-    if (!ts.length) return '';
-    const w = ts.filter(t => t.pnl > 0);
-    const pnl = ts.reduce((s, t) => s + t.pnl, 0);
-    return `<div class="stats-detail-row">
-      <span style="font-weight:600;font-size:13px;min-width:110px">${acc==='ftmo'?'FTMO Challenge':acc==='demo'?'Pepperstone Demo':'Pepperstone TV'}</span>
-      <span style="font-size:13px">P&L : <strong class="${pnl>=0?'pnl-pos':'pnl-neg'}">${fmt(pnl)}</strong></span>
-      <span style="font-size:13px;color:var(--text2)">${ts.length} trade${ts.length>1?'s':''}</span>
-      <span style="font-size:13px;color:var(--text2)">Win rate : <strong style="color:var(--text)">${ts.length?Math.round(w.length/ts.length*100)+'%':'—'}</strong></span>
-    </div>`;
-  }).join('');
-}
+    .badge-demo {
+      background: rgba(45, 181, 122, 0.15);
+      color: var(--demo);
+    }
 
-function renderChart() {
-  const dates = [...new Set(trades.map(t => t.date))].sort();
-  if (!dates.length) { if (pnlChart) { pnlChart.destroy(); pnlChart = null; } return; }
-  const buildCumul = acc => { let c = 0; return dates.map(d => { c += trades.filter(t => t.acc === acc && t.date === d).reduce((s, t) => s + t.pnl, 0); return parseFloat(c.toFixed(2)); }); };
-  if (pnlChart) pnlChart.destroy();
-  pnlChart = new Chart(document.getElementById('pnlChart').getContext('2d'), {
-    type: 'line',
-    data: {
-      labels: dates,
-      datasets: [
-        { label: 'FTMO', data: buildCumul('ftmo'), borderColor: '#4a90d9', backgroundColor: 'rgba(74,144,217,0.06)', borderWidth: 2, tension: 0.3, pointRadius: 3, fill: true },
-        { label: 'Demo', data: buildCumul('demo'), borderColor: '#2db57a', backgroundColor: 'rgba(45,181,122,0.06)', borderWidth: 2, tension: 0.3, pointRadius: 3, fill: true },
-        { label: 'TV', data: buildCumul('tv'), borderColor: '#9b6dff', backgroundColor: 'rgba(155,109,255,0.06)', borderWidth: 2, tension: 0.3, pointRadius: 3, fill: true }
-      ]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#888', callback: v => '$' + v } },
-        x: { grid: { display: false }, ticks: { color: '#888', maxRotation: 45, autoSkip: true } }
+    .badge-tv {
+      background: rgba(155, 109, 255, 0.15);
+      color: var(--tv);
+    }
+
+    .badge-buy {
+      background: rgba(45, 181, 122, 0.15);
+      color: var(--green);
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    .badge-sell {
+      background: rgba(224, 90, 78, 0.15);
+      color: var(--red);
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    .pnl-pos {
+      color: var(--green);
+      font-weight: 600;
+    }
+
+    .pnl-neg {
+      color: var(--red);
+      font-weight: 600;
+    }
+
+    .add-trade-form {
+      background: var(--bg2);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .form-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .form-group select,
+    .form-group input {
+      width: 100%;
+      font-size: 13px;
+      padding: 8px 10px;
+      border-radius: var(--radius-sm);
+      border: 0.5px solid var(--border2);
+      background: var(--bg3);
+      color: var(--text);
+      outline: none;
+      transition: border-color .15s;
+    }
+
+    .form-group select:focus,
+    .form-group input:focus {
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .btn {
+      padding: 8px 18px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      border: none;
+      transition: opacity .15s;
+    }
+
+    .btn-primary {
+      background: var(--text);
+      color: var(--bg);
+    }
+
+    .btn-primary:hover {
+      opacity: .85;
+    }
+
+    .btn-secondary {
+      background: var(--bg3);
+      color: var(--text2);
+      border: 0.5px solid var(--border2);
+    }
+
+    .btn-secondary:hover {
+      color: var(--text);
+      border-color: var(--border2);
+    }
+
+    .btn-del {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text3);
+      font-size: 16px;
+      padding: 3px 7px;
+      border-radius: 4px;
+      transition: all .15s;
+    }
+
+    .btn-del:hover {
+      color: var(--red);
+      background: rgba(224, 90, 78, 0.1);
+    }
+
+    .filter-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .filter-row select {
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: var(--radius-sm);
+      border: 0.5px solid var(--border2);
+      background: var(--bg2);
+      color: var(--text);
+      margin-left: 6px;
+      cursor: pointer;
+    }
+
+    .progress-bar {
+      height: 5px;
+      background: var(--bg3);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width .4s, background .3s;
+    }
+
+    .ftmo-rules {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 1.5rem;
+    }
+
+    .rule-card {
+      background: var(--bg2);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.1rem;
+    }
+
+    .rule-name {
+      font-size: 11px;
+      color: var(--text2);
+      margin-bottom: 5px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .rule-val {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .rule-limit {
+      font-size: 11px;
+      color: var(--text3);
+      margin-top: 2px;
+    }
+
+    .ftmo-params {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 1.5rem;
+    }
+
+    .status-ok {
+      color: var(--green);
+    }
+
+    .status-warn {
+      color: var(--amber);
+    }
+
+    .status-fail {
+      color: var(--red);
+    }
+
+    .ftmo-status-box {
+      background: var(--bg2);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+      font-size: 13px;
+    }
+
+    .chart-wrap {
+      position: relative;
+      width: 100%;
+      height: 240px;
+      margin-bottom: 1rem;
+      background: var(--bg2);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+    }
+
+    .chart-legend {
+      display: flex;
+      gap: 16px;
+      font-size: 12px;
+      color: var(--text2);
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .chart-legend span {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 3px;
+      border-radius: 2px;
+      display: inline-block;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 1.25rem;
+    }
+
+    .stats-detail {
+      background: var(--bg2);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .stats-detail-row {
+      display: flex;
+      gap: 24px;
+      align-items: center;
+      padding: 12px 16px;
+      border-bottom: 0.5px solid var(--border);
+      flex-wrap: wrap;
+    }
+
+    .stats-detail-row:last-child {
+      border-bottom: none;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 2.5rem;
+      color: var(--text3);
+      font-size: 13px;
+    }
+
+    /* IMPORT MODAL */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .modal-overlay.hidden {
+      display: none;
+    }
+
+    .modal {
+      background: var(--bg2);
+      border: 0.5px solid var(--border2);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      width: 100%;
+      max-width: 560px;
+    }
+
+    .modal-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .modal-sub {
+      font-size: 12px;
+      color: var(--text2);
+      margin-bottom: 1.25rem;
+    }
+
+    .import-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 1.25rem;
+    }
+
+    .import-tab {
+      flex: 1;
+      padding: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      border: 0.5px solid var(--border2);
+      background: var(--bg3);
+      color: var(--text2);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      text-align: center;
+      transition: all .15s;
+    }
+
+    .import-tab.active {
+      background: var(--bg);
+      color: var(--text);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .drop-zone {
+      border: 1.5px dashed var(--border2);
+      border-radius: var(--radius);
+      padding: 2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .15s;
+      margin-bottom: 1rem;
+    }
+
+    .drop-zone:hover,
+    .drop-zone.drag {
+      border-color: rgba(255, 255, 255, 0.4);
+    }
+
+    .drop-zone i {
+      font-size: 28px;
+      color: var(--text3);
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .drop-zone p {
+      font-size: 13px;
+      color: var(--text2);
+    }
+
+    .drop-zone small {
+      font-size: 11px;
+      color: var(--text3);
+    }
+
+    .import-instructions {
+      background: var(--bg3);
+      border-radius: var(--radius-sm);
+      padding: 1rem;
+      margin-bottom: 1rem;
+      font-size: 12px;
+      color: var(--text2);
+      line-height: 1.7;
+    }
+
+    .import-instructions strong {
+      color: var(--text);
+    }
+
+    .import-account-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 1rem;
+    }
+
+    .import-preview {
+      background: var(--bg3);
+      border-radius: var(--radius-sm);
+      padding: 0.75rem 1rem;
+      margin-bottom: 1rem;
+      font-size: 12px;
+      color: var(--green);
+      display: none;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .import-error {
+      background: rgba(224, 90, 78, 0.1);
+      border: 0.5px solid rgba(224, 90, 78, 0.3);
+      border-radius: var(--radius-sm);
+      padding: 0.75rem 1rem;
+      margin-bottom: 1rem;
+      font-size: 12px;
+      color: var(--red);
+      display: none;
+    }
+
+    @media (max-width: 700px) {
+      .accounts-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .metrics-row {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .form-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .ftmo-rules {
+        grid-template-columns: 1fr;
+      }
+
+      .container {
+        padding: 1rem;
+      }
+
+      header {
+        padding: 1rem;
       }
     }
-  });
-}
+  </style>
+</head>
 
-renderAll();
-</script>
+<body>
+
+  <!-- MODAL IMPORT -->
+  <div class="modal-overlay hidden" id="import-modal">
+    <div class="modal">
+      <div class="modal-title">Importer des trades</div>
+      <div class="modal-sub">Supporte les exports MT5 (Positions) et TradingView (Strategy Tester CSV)</div>
+
+      <div class="import-tabs">
+        <div class="import-tab active" onclick="setImportTab('mt5')" id="itab-mt5"><i class="ti ti-brand-docker"></i>
+          MT5</div>
+        <div class="import-tab" onclick="setImportTab('tv')" id="itab-tv"><i class="ti ti-chart-candle"></i> TradingView
+        </div>
+      </div>
+
+      <div id="instructions-mt5" class="import-instructions">
+        <strong>Comment exporter depuis MT5 :</strong><br>
+        1. Ouvre MT5 → onglet <strong>Toolbox</strong> (bas de l'écran, Ctrl+T)<br>
+        2. Clique sur <strong>History</strong><br>
+        3. Clic droit → <strong>Save as Report</strong> ou <strong>Save as Detailed Report</strong><br>
+        4. Sauvegarde en <strong>.htm / .html</strong><br>
+        5. Ouvre le fichier .htm dans Excel → Fichier → Enregistrer sous → <strong>CSV UTF-8</strong><br><br>
+        <strong>Colonnes attendues :</strong> Time, Symbol, Type, Volume, Price, S/L, T/P, Profit
+      </div>
+      <div id="instructions-tv" class="import-instructions" style="display:none">
+        <strong>Comment exporter depuis TradingView :</strong><br>
+        1. Ouvre ton strategy dans TradingView<br>
+        2. Onglet <strong>Strategy Tester</strong> en bas<br>
+        3. Clique sur <strong>List of Trades</strong><br>
+        4. Icône <strong>télécharger</strong> (export CSV) en haut à droite<br><br>
+        <strong>Colonnes attendues :</strong> Trade #, Type, Signal, Date/Time, Price, Contracts, Profit, Cumulative
+        Profit, Run-up, Drawdown
+      </div>
+
+      <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+        <i class="ti ti-upload"></i>
+        <p>Glisse ton fichier CSV ici</p>
+        <small>ou clique pour choisir</small>
+      </div>
+      <input type="file" id="file-input" accept=".csv,.htm,.html" style="display:none"
+        onchange="handleFile(this.files[0])">
+
+      <div class="import-account-row">
+        <label class="form-label" style="white-space:nowrap">Importer sur :</label>
+        <select id="import-account"
+          style="flex:1;font-size:13px;padding:8px 10px;border-radius:var(--radius-sm);border:0.5px solid var(--border2);background:var(--bg3);color:var(--text)">
+          <option value="ftmo">FTMO Challenge</option>
+          <option value="demo">Pepperstone Demo</option>
+          <option value="tv">Pepperstone TV</option>
+        </select>
+      </div>
+
+      <div class="import-error" id="import-error"></div>
+      <div class="import-preview" id="import-preview"></div>
+
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeImport()">Annuler</button>
+        <button class="btn btn-primary" id="btn-confirm-import" onclick="confirmImport()" disabled>Importer</button>
+      </div>
+    </div>
+  </div>
+
+  <header>
+    <div class="logo">Trading <span>Dashboard</span></div>
+    <div class="header-right">
+      <div class="header-date" id="header-date"></div>
+      <button class="btn btn-secondary" onclick="openImport()" style="font-size:12px;padding:6px 14px"><i
+          class="ti ti-upload" style="margin-right:4px;vertical-align:-2px"></i>Importer CSV</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('overview')"><i class="ti ti-layout-dashboard"></i>Vue
+        globale</button>
+      <button class="tab" onclick="switchTab('trades')"><i class="ti ti-list"></i>Trades</button>
+      <button class="tab" onclick="switchTab('ftmo')"><i class="ti ti-shield-check"></i>FTMO</button>
+      <button class="tab" onclick="switchTab('stats')"><i class="ti ti-chart-bar"></i>Stats</button>
+    </div>
+
+    <!-- VUE GLOBALE -->
+    <div id="view-overview" class="view active">
+      <div class="accounts-grid">
+        <div class="account-card ftmo">
+          <span class="acc-badge">FTMO Challenge</span>
+          <div class="acc-name">FTMO $10K</div>
+          <div class="acc-sub">Prop firm · Phase 1</div>
+          <div class="acc-balance" id="ftmo-balance">$10 000.00</div>
+          <div class="acc-pnl flat" id="ftmo-pnl">$0.00 aujourd'hui</div>
+          <div class="acc-stats">
+            <div class="stat-mini">
+              <div class="stat-mini-val" id="ftmo-wr">—</div>
+              <div class="stat-mini-lbl">Win rate</div>
+            </div>
+            <div class="stat-mini">
+              <div class="stat-mini-val" id="ftmo-dd">0%</div>
+              <div class="stat-mini-lbl">Drawdown</div>
+            </div>
+          </div>
+        </div>
+        <div class="account-card demo">
+          <span class="acc-badge">Demo</span>
+          <div class="acc-name">Pepperstone Demo</div>
+          <div class="acc-sub">MT5 · XAUUSD</div>
+          <div class="acc-balance" id="demo-balance">$10 000.00</div>
+          <div class="acc-pnl flat" id="demo-pnl">$0.00 aujourd'hui</div>
+          <div class="acc-stats">
+            <div class="stat-mini">
+              <div class="stat-mini-val" id="demo-wr">—</div>
+              <div class="stat-mini-lbl">Win rate</div>
+            </div>
+            <div class="stat-mini">
+              <div class="stat-mini-val" id="demo-dd">0%</div>
+              <div class="stat-mini-lbl">Drawdown</div>
+            </div>
+          </div>
+        </div>
+        <div class="account-card tv">
+          <span class="acc-badge">Live</span>
+          <div class="acc-name">Pepperstone TV</div>
+          <div class="acc-sub">TradingView · Multi-actifs</div>
+          <div class="acc-balance" id="tv-balance">$10 000.00</div>
+          <div class="acc-pnl flat" id="tv-pnl">$0.00 aujourd'hui</div>
+          <div class="acc-stats">
+            <div class="stat-mini">
+              <div class="stat-mini-val" id="tv-wr">—</div>
+              <div class="stat-mini-lbl">Win rate</div>
+            </div>
+            <div class="stat-mini">
+              <div class="stat-mini-val" id="tv-dd">0%</div>
+              <div class="stat-mini-lbl">Drawdown</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="metrics-row">
+        <div class="metric-card">
+          <div class="metric-val" id="total-pnl">$0.00</div>
+          <div class="metric-lbl">P&L total</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-val" id="total-trades">0</div>
+          <div class="metric-lbl">Trades enregistrés</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-val" id="global-wr">—</div>
+          <div class="metric-lbl">Win rate global</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-val" id="best-account">—</div>
+          <div class="metric-lbl">Meilleur compte</div>
+        </div>
+      </div>
+      <div class="section-title">Derniers trades</div>
+      <div class="trade-table-wrap" id="recent-trades-wrap">
+        <div class="empty-state">Aucun trade — va dans l'onglet Trades pour commencer.</div>
+      </div>
+    </div>
+
+    <!-- TRADES -->
+    <div id="view-trades" class="view">
+      <div class="add-trade-form">
+        <div class="section-title" style="margin-bottom:14px">Ajouter un trade manuellement</div>
+        <div class="form-grid">
+          <div class="form-group"><label class="form-label">Compte</label>
+            <select id="f-account">
+              <option value="ftmo">FTMO Challenge</option>
+              <option value="demo">Pepperstone Demo</option>
+              <option value="tv">Pepperstone TV</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Date</label><input type="date" id="f-date"></div>
+          <div class="form-group"><label class="form-label">Paire</label><input type="text" id="f-pair"
+              placeholder="XAUUSD" value="XAUUSD"></div>
+          <div class="form-group"><label class="form-label">Direction</label>
+            <select id="f-dir">
+              <option value="BUY">BUY</option>
+              <option value="SELL">SELL</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Lots</label><input type="number" id="f-lots"
+              placeholder="0.01" step="0.01" min="0"></div>
+          <div class="form-group"><label class="form-label">Entrée</label><input type="number" id="f-entry"
+              placeholder="2350.00" step="0.01"></div>
+          <div class="form-group"><label class="form-label">Sortie</label><input type="number" id="f-exit"
+              placeholder="2365.00" step="0.01"></div>
+          <div class="form-group"><label class="form-label">P&L ($)</label><input type="number" id="f-pnl"
+              placeholder="+150.00" step="0.01"></div>
+        </div>
+        <div style="display:flex;align-items:flex-end;gap:10px">
+          <div class="form-group" style="flex:1"><label class="form-label">Note (optionnel)</label><input type="text"
+              id="f-note" placeholder="Ex: London breakout, SL trop serré..."></div>
+          <button class="btn btn-primary" onclick="addTrade()">+ Ajouter</button>
+        </div>
+      </div>
+      <div class="filter-row">
+        <div class="section-title" style="margin-bottom:0" id="trade-count-label">Historique</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <button class="btn btn-secondary" onclick="openImport()" style="font-size:12px;padding:5px 12px"><i
+              class="ti ti-upload" style="margin-right:4px;vertical-align:-2px"></i>Import CSV</button>
+          <select id="filter-account" onchange="renderTradeTable()">
+            <option value="all">Tous les comptes</option>
+            <option value="ftmo">FTMO</option>
+            <option value="demo">Demo</option>
+            <option value="tv">TV</option>
+          </select>
+          <select id="filter-result" onchange="renderTradeTable()">
+            <option value="all">Tous</option>
+            <option value="win">Wins</option>
+            <option value="loss">Losses</option>
+          </select>
+        </div>
+      </div>
+      <div class="trade-table-wrap" id="trade-table-wrap">
+        <div class="empty-state">Aucun trade pour l'instant.</div>
+      </div>
+    </div>
+
+    <!-- FTMO -->
+    <div id="view-ftmo" class="view">
+      <div class="section-title">Règles du challenge FTMO $10K</div>
+      <div class="ftmo-rules">
+        <div class="rule-card">
+          <div class="rule-name">Objectif de profit</div>
+          <div class="rule-val" id="ftmo-target-val">$0 / $1 000</div>
+          <div class="rule-limit">Minimum requis : +10%</div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="ftmo-target-bar" style="width:0%;background:var(--green)"></div>
+          </div>
+        </div>
+        <div class="rule-card">
+          <div class="rule-name">Max Daily Loss</div>
+          <div class="rule-val" id="ftmo-daily-val">$0 / $500</div>
+          <div class="rule-limit">Limite journalière : -5%</div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="ftmo-daily-bar" style="width:0%;background:var(--green)"></div>
+          </div>
+        </div>
+        <div class="rule-card">
+          <div class="rule-name">Max Overall Loss</div>
+          <div class="rule-val" id="ftmo-overall-val">$0 / $1 000</div>
+          <div class="rule-limit">Limite totale : -10%</div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="ftmo-overall-bar" style="width:0%;background:var(--green)"></div>
+          </div>
+        </div>
+        <div class="rule-card">
+          <div class="rule-name">Jours de trading min</div>
+          <div class="rule-val" id="ftmo-days-val">0 / 4 jours</div>
+          <div class="rule-limit">Minimum 4 jours actifs</div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="ftmo-days-bar" style="width:0%;background:var(--ftmo)"></div>
+          </div>
+        </div>
+      </div>
+      <div class="section-title">Statut</div>
+      <div class="ftmo-status-box" id="ftmo-status-wrap">
+        <span style="color:var(--text2)">Aucun trade enregistré sur le compte FTMO.</span>
+      </div>
+      <div class="section-title" style="margin-top:1.5rem">Paramètres</div>
+      <div class="ftmo-params">
+        <div class="form-group"><label class="form-label">Capital initial ($)</label><input type="number"
+            id="ftmo-capital" value="10000" onchange="updateFTMO()"></div>
+        <div class="form-group"><label class="form-label">Phase</label>
+          <select id="ftmo-phase" onchange="updateFTMO()">
+            <option value="1">Phase 1 — target 10%</option>
+            <option value="2">Phase 2 — target 5%</option>
+            <option value="funded">Funded</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Date de début</label><input type="date" id="ftmo-start"></div>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div id="view-stats" class="view">
+      <div class="stats-grid">
+        <div class="metric-card">
+          <div class="metric-val" id="s-wr">—</div>
+          <div class="metric-lbl">Win rate global</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-val" id="s-rr">—</div>
+          <div class="metric-lbl">Ratio R:R moyen</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-val" id="s-avg-win">—</div>
+          <div class="metric-lbl">Gain moyen</div>
+        </div>
+      </div>
+      <div class="stats-grid">
+        <div class="metric-card">
+          <div class="metric-val" id="s-avg-loss">—</div>
+          <div class="metric-lbl">Perte moyenne</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-val" id="s-streak">—</div>
+          <div class="metric-lbl">Série gagnante max</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-val" id="s-best-pair">—</div>
+          <div class="metric-lbl">Meilleure paire</div>
+        </div>
+      </div>
+      <div class="section-title">Évolution P&L cumulé</div>
+      <div class="chart-wrap"><canvas id="pnlChart" role="img" aria-label="Courbe P&L cumulé par compte">Évolution du
+          P&L cumulé.</canvas></div>
+      <div class="chart-legend">
+        <span><span class="legend-dot" style="background:var(--ftmo)"></span>FTMO</span>
+        <span><span class="legend-dot" style="background:var(--demo)"></span>Demo</span>
+        <span><span class="legend-dot" style="background:var(--tv)"></span>TV</span>
+      </div>
+      <div class="section-title">Détail par compte</div>
+      <div class="stats-detail" id="stats-detail-wrap">
+        <div class="empty-state">Ajoutez des trades pour voir les statistiques.</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let trades = JSON.parse(localStorage.getItem('trading_dashboard_v2') || '[]');
+    let pnlChart = null;
+    let pendingImport = [];
+    let importSource = 'mt5';
+    const STARTS = { ftmo: 10000, demo: 10000, tv: 10000 };
+
+    document.getElementById('header-date').textContent = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
+
+    function save() { localStorage.setItem('trading_dashboard_v2', JSON.stringify(trades)); }
+    function fmt(n) { return (n >= 0 ? '+' : '-') + '$' + Math.abs(n).toFixed(2); }
+
+    function switchTab(id) {
+      document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', ['overview', 'trades', 'ftmo', 'stats'][i] === id));
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.getElementById('view-' + id).classList.add('active');
+      if (id === 'stats') renderChart();
+    }
+
+    // ─── IMPORT ───────────────────────────────────────────────
+    function openImport() { document.getElementById('import-modal').classList.remove('hidden'); }
+    function closeImport() {
+      document.getElementById('import-modal').classList.add('hidden');
+      document.getElementById('import-preview').style.display = 'none';
+      document.getElementById('import-error').style.display = 'none';
+      document.getElementById('btn-confirm-import').disabled = true;
+      document.getElementById('file-input').value = '';
+      pendingImport = [];
+    }
+
+    function setImportTab(tab) {
+      importSource = tab;
+      document.getElementById('itab-mt5').classList.toggle('active', tab === 'mt5');
+      document.getElementById('itab-tv').classList.toggle('active', tab === 'tv');
+      document.getElementById('instructions-mt5').style.display = tab === 'mt5' ? 'block' : 'none';
+      document.getElementById('instructions-tv').style.display = tab === 'tv' ? 'block' : 'none';
+      document.getElementById('import-preview').style.display = 'none';
+      document.getElementById('import-error').style.display = 'none';
+      document.getElementById('btn-confirm-import').disabled = true;
+      pendingImport = [];
+    }
+
+    const dz = document.getElementById('drop-zone');
+    dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+    dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+    dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag'); handleFile(e.dataTransfer.files[0]); });
+
+    function handleFile(file) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => parseCSV(e.target.result, file.name);
+      reader.readAsText(file, 'UTF-8');
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('import-error');
+      el.textContent = msg;
+      el.style.display = 'block';
+      document.getElementById('import-preview').style.display = 'none';
+      document.getElementById('btn-confirm-import').disabled = true;
+    }
+
+    function showPreview(trades) {
+      const el = document.getElementById('import-preview');
+      el.style.display = 'block';
+      el.innerHTML = '<i class="ti ti-circle-check" style="margin-right:6px"></i>' + trades.length + ' trade(s) détecté(s) — prêt à importer.';
+      document.getElementById('import-error').style.display = 'none';
+      document.getElementById('btn-confirm-import').disabled = false;
+    }
+
+    function parseCSV(text, filename) {
+      pendingImport = [];
+      // Nettoyer BOM et espaces
+      text = text.replace(/^\uFEFF/, '').trim();
+      const lines = text.split(/\r?\n/).filter(l => l.trim());
+      if (lines.length < 2) { showError('Fichier vide ou invalide.'); return; }
+
+      // Détecter le séparateur
+      const sep = lines[0].includes('\t') ? '\t' : lines[0].includes(';') ? ';' : ',';
+
+      const parseRow = line => {
+        const result = []; let cur = ''; let inQ = false;
+        for (let i = 0; i < line.length; i++) {
+          const c = line[i];
+          if (c === '"') { inQ = !inQ; continue; }
+          if (c === sep && !inQ) { result.push(cur.trim()); cur = ''; continue; }
+          cur += c;
+        }
+        result.push(cur.trim());
+        return result;
+      };
+
+      const headers = parseRow(lines[0]).map(h => h.toLowerCase().replace(/[^a-z0-9]/g, ''));
+      console.log('Headers:', headers);
+
+      if (importSource === 'mt5') {
+        pendingImport = parseMT5(headers, lines, parseRow);
+      } else {
+        pendingImport = parseTV(headers, lines, parseRow);
+      }
+
+      if (pendingImport.length === 0) {
+        showError('Aucun trade valide trouvé. Vérifiez le format et le type sélectionné (MT5 ou TradingView).');
+      } else {
+        showPreview(pendingImport);
+      }
+    }
+
+    function parseMT5(headers, lines, parseRow) {
+      // Colonnes MT5 Positions: Time, Symbol, Ticket, Type, Volume, Price, S/L, T/P, Time(close), Price(close), Profit
+      // On cherche les index flexiblement
+      const find = (...names) => { for (const n of names) { const i = headers.indexOf(n); if (i !== -1) return i; } return -1; };
+      const iTime = find('time', 'opentime', 'datetime');
+      const iSymbol = find('symbol', 'instrument', 'pair');
+      const iType = find('type', 'direction', 'side');
+      const iVol = find('volume', 'lots', 'qty', 'contracts');
+      const iPrice = find('price', 'openprice', 'entryprice', 'entry');
+      const iProfit = find('profit', 'pl', 'pnl', 'grosspl', 'netresult', 'result');
+
+      if (iProfit === -1) { return []; }
+
+      const acc = document.getElementById('import-account').value;
+      const result = [];
+      for (let i = 1; i < lines.length; i++) {
+        const row = parseRow(lines[i]);
+        if (row.length < 3) continue;
+        const profit = parseFloat((row[iProfit] || '').replace(',', '.'));
+        if (isNaN(profit)) continue;
+        // Ignorer lignes balance/dépôt
+        const type = (iType !== -1 ? row[iType] : '').toLowerCase();
+        if (type === 'balance' || type === 'credit' || type === 'deposit') continue;
+
+        const rawDate = iTime !== -1 ? row[iTime] : '';
+        const date = rawDate ? rawDate.split(' ')[0].replace(/\./g, '-') : new Date().toISOString().split('T')[0];
+        const symbol = iSymbol !== -1 ? row[iSymbol] : 'XAUUSD';
+        const dir = type.includes('sell') ? 'SELL' : 'BUY';
+        const lots = iVol !== -1 ? parseFloat((row[iVol] || '0').replace(',', '.')) || 0 : 0;
+        const entry = iPrice !== -1 ? parseFloat((row[iPrice] || '0').replace(',', '.')) || 0 : 0;
+
+        result.push({ id: Date.now() + i, acc, date, pair: symbol || 'XAUUSD', dir, lots, entry, exit: 0, pnl: profit, note: 'Import MT5' });
+      }
+      return result;
+    }
+
+    function parseTV(headers, lines, parseRow) {
+      // Colonnes TradingView Strategy Tester: Trade #, Type, Signal, Date/Time, Price, Contracts, Profit, Cumulative Profit, Run-up, Drawdown
+      const find = (...names) => { for (const n of names) { const i = headers.indexOf(n); if (i !== -1) return i; } return -1; };
+      const iType = find('type', 'side', 'direction');
+      const iDate = find('datetime', 'date', 'time', 'dattime');
+      const iPrice = find('price', 'entryprice', 'entry');
+      const iProfit = find('profit', 'pl', 'pnl', 'netprofit', 'result');
+      const iContracts = find('contracts', 'qty', 'volume', 'lots');
+
+      if (iProfit === -1) { return []; }
+
+      const acc = document.getElementById('import-account').value;
+      const result = [];
+      // TradingView liste Entry + Exit en lignes séparées, on prend les Exit (qui ont le profit)
+      for (let i = 1; i < lines.length; i++) {
+        const row = parseRow(lines[i]);
+        if (row.length < 3) continue;
+        const profit = parseFloat((row[iProfit] || '').replace(',', '.').replace(/[^0-9.\-]/g, ''));
+        if (isNaN(profit)) continue;
+        const type = (iType !== -1 ? row[iType] : '').toLowerCase();
+        // Prendre uniquement les lignes "exit" ou "close" qui ont un P&L
+        if (type && (type.includes('entry') || type === 'long' || type === 'short')) continue;
+
+        const rawDate = iDate !== -1 ? row[iDate] : '';
+        const date = rawDate ? rawDate.split(' ')[0].replace(/\//g, '-') : new Date().toISOString().split('T')[0];
+        const dir = type.includes('short') || type.includes('sell') ? 'SELL' : 'BUY';
+        const lots = iContracts !== -1 ? parseFloat((row[iContracts] || '1').replace(',', '.')) || 1 : 1;
+        const price = iPrice !== -1 ? parseFloat((row[iPrice] || '0').replace(',', '.')) || 0 : 0;
+
+        result.push({ id: Date.now() + i, acc, date, pair: 'XAUUSD', dir, lots, entry: price, exit: 0, pnl: profit, note: 'Import TradingView' });
+      }
+      return result;
+    }
+
+    function confirmImport() {
+      if (!pendingImport.length) return;
+      trades = [...trades, ...pendingImport];
+      save(); renderAll();
+      closeImport();
+      alert(pendingImport.length + ' trade(s) importé(s) avec succès !');
+    }
+
+    // ─── MANUAL ADD ───────────────────────────────────────────
+    function addTrade() {
+      const pnl = parseFloat(document.getElementById('f-pnl').value);
+      if (isNaN(pnl)) { alert('Le champ P&L est obligatoire.'); return; }
+      trades.push({
+        id: Date.now(),
+        acc: document.getElementById('f-account').value,
+        date: document.getElementById('f-date').value || new Date().toISOString().split('T')[0],
+        pair: document.getElementById('f-pair').value || 'XAUUSD',
+        dir: document.getElementById('f-dir').value,
+        lots: parseFloat(document.getElementById('f-lots').value) || 0,
+        entry: parseFloat(document.getElementById('f-entry').value) || 0,
+        exit: parseFloat(document.getElementById('f-exit').value) || 0,
+        pnl,
+        note: document.getElementById('f-note').value
+      });
+      save(); renderAll();
+      ['f-pnl', 'f-entry', 'f-exit', 'f-note', 'f-lots'].forEach(id => document.getElementById(id).value = '');
+    }
+
+    function deleteTrade(id) {
+      if (!confirm('Supprimer ce trade ?')) return;
+      trades = trades.filter(t => t.id !== id);
+      save(); renderAll();
+    }
+
+    // ─── RENDER ───────────────────────────────────────────────
+    function renderAll() { renderCards(); renderTradeTable(); renderRecentTrades(); updateFTMO(); renderStats(); }
+
+    function renderCards() {
+      ['ftmo', 'demo', 'tv'].forEach(acc => {
+        const ts = trades.filter(t => t.acc === acc);
+        const total = ts.reduce((s, t) => s + t.pnl, 0);
+        const today = new Date().toISOString().split('T')[0];
+        const todayPnl = ts.filter(t => t.date === today).reduce((s, t) => s + t.pnl, 0);
+        const wins = ts.filter(t => t.pnl > 0).length;
+        const bal = STARTS[acc] + total;
+        let minCumul = 0, cumul = 0;
+        ts.forEach(t => { cumul += t.pnl; if (cumul < minCumul) minCumul = cumul; });
+        const ddPct = ts.length ? (Math.abs(minCumul) / STARTS[acc] * 100).toFixed(1) + '%' : '0%';
+        document.getElementById(acc + '-balance').textContent = '$' + bal.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const pEl = document.getElementById(acc + '-pnl');
+        pEl.textContent = fmt(todayPnl) + ' aujourd\'hui';
+        pEl.className = 'acc-pnl ' + (todayPnl > 0 ? 'pos' : todayPnl < 0 ? 'neg' : 'flat');
+        document.getElementById(acc + '-wr').textContent = ts.length ? Math.round(wins / ts.length * 100) + '%' : '—';
+        document.getElementById(acc + '-dd').textContent = ddPct;
+      });
+      const allPnl = trades.reduce((s, t) => s + t.pnl, 0);
+      const tEl = document.getElementById('total-pnl');
+      tEl.textContent = fmt(allPnl);
+      tEl.style.color = allPnl > 0 ? 'var(--green)' : allPnl < 0 ? 'var(--red)' : 'var(--text)';
+      document.getElementById('total-trades').textContent = trades.length;
+      const wins = trades.filter(t => t.pnl > 0).length;
+      document.getElementById('global-wr').textContent = trades.length ? Math.round(wins / trades.length * 100) + '%' : '—';
+      if (trades.length) {
+        const best = ['ftmo', 'demo', 'tv'].reduce((b, a) => {
+          return trades.filter(t => t.acc === a).reduce((s, t) => s + t.pnl, 0) >
+            trades.filter(t => t.acc === b).reduce((s, t) => s + t.pnl, 0) ? a : b;
+        }, 'ftmo');
+        document.getElementById('best-account').textContent = best === 'ftmo' ? 'FTMO' : best === 'demo' ? 'Demo' : 'TV';
+      } else { document.getElementById('best-account').textContent = '—'; }
+    }
+
+    function tradeRow(t, showDel = true) {
+      return `<tr>
+    <td style="font-size:11px;color:var(--text2)">${t.date}</td>
+    <td><span class="badge-account badge-${t.acc}">${t.acc === 'ftmo' ? 'FTMO' : t.acc === 'demo' ? 'Demo' : 'TV'}</span></td>
+    <td style="font-weight:600">${t.pair}</td>
+    <td><span class="badge-${t.dir.toLowerCase()}">${t.dir}</span></td>
+    <td style="color:var(--text2)">${t.lots || '—'}</td>
+    <td style="color:var(--text2)">${t.entry || '—'}</td>
+    <td style="color:var(--text2)">${t.exit || '—'}</td>
+    <td class="${t.pnl >= 0 ? 'pnl-pos' : 'pnl-neg'}">${fmt(t.pnl)}</td>
+    <td style="font-size:11px;color:var(--text2);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.note || ''}</td>
+    ${showDel ? `<td><button class="btn-del" onclick="deleteTrade(${t.id})" title="Supprimer"><i class="ti ti-trash"></i></button></td>` : ''}
+  </tr>`;
+    }
+
+    function tableHeader(showDel = true) {
+      return `<thead><tr>
+    <th style="width:80px">Date</th><th style="width:80px">Compte</th><th style="width:75px">Paire</th>
+    <th style="width:55px">Dir.</th><th style="width:50px">Lots</th><th style="width:72px">Entrée</th>
+    <th style="width:72px">Sortie</th><th style="width:85px">P&L</th><th>Note</th>
+    ${showDel ? '<th style="width:35px"></th>' : ''}
+  </tr></thead>`;
+    }
+
+    function renderTradeTable() {
+      const accF = document.getElementById('filter-account').value;
+      const resF = document.getElementById('filter-result').value;
+      let filtered = trades.slice().reverse();
+      if (accF !== 'all') filtered = filtered.filter(t => t.acc === accF);
+      if (resF === 'win') filtered = filtered.filter(t => t.pnl > 0);
+      if (resF === 'loss') filtered = filtered.filter(t => t.pnl <= 0);
+      document.getElementById('trade-count-label').textContent = `Historique (${filtered.length} trade${filtered.length > 1 ? 's' : ''})`;
+      const wrap = document.getElementById('trade-table-wrap');
+      if (!filtered.length) { wrap.innerHTML = '<div class="empty-state">Aucun trade correspondant.</div>'; return; }
+      wrap.innerHTML = `<table class="trade-table">${tableHeader()}<tbody>${filtered.map(t => tradeRow(t)).join('')}</tbody></table>`;
+    }
+
+    function renderRecentTrades() {
+      const wrap = document.getElementById('recent-trades-wrap');
+      const recent = trades.slice(-5).reverse();
+      if (!recent.length) { wrap.innerHTML = '<div class="empty-state">Aucun trade — va dans l\'onglet Trades pour commencer.</div>'; return; }
+      wrap.innerHTML = `<table class="trade-table">${tableHeader(false)}<tbody>${recent.map(t => tradeRow(t, false)).join('')}</tbody></table>`;
+    }
+
+    function updateFTMO() {
+      const capital = parseFloat(document.getElementById('ftmo-capital').value) || 10000;
+      const phase = document.getElementById('ftmo-phase').value;
+      const targetPct = phase === '1' ? 0.10 : phase === '2' ? 0.05 : 0;
+      const targetAmt = capital * targetPct;
+      const maxDaily = capital * 0.05;
+      const maxOverall = capital * 0.10;
+      const ts = trades.filter(t => t.acc === 'ftmo');
+      const totalPnl = ts.reduce((s, t) => s + t.pnl, 0);
+      const today = new Date().toISOString().split('T')[0];
+      const todayLoss = Math.abs(Math.min(0, ts.filter(t => t.date === today).reduce((s, t) => s + t.pnl, 0)));
+      const activeDays = new Set(ts.map(t => t.date)).size;
+      document.getElementById('ftmo-target-val').textContent = '$' + Math.max(0, totalPnl).toFixed(0) + ' / $' + targetAmt.toFixed(0);
+      document.getElementById('ftmo-daily-val').textContent = '$' + todayLoss.toFixed(0) + ' / $' + maxDaily.toFixed(0);
+      document.getElementById('ftmo-overall-val').textContent = '$' + Math.abs(Math.min(0, totalPnl)).toFixed(0) + ' / $' + maxOverall.toFixed(0);
+      document.getElementById('ftmo-days-val').textContent = activeDays + ' / 4 jours';
+      const tPct = targetAmt > 0 ? Math.min(100, Math.max(0, totalPnl) / targetAmt * 100) : 0;
+      const dPct = Math.min(100, todayLoss / maxDaily * 100);
+      const oPct = Math.min(100, Math.abs(Math.min(0, totalPnl)) / maxOverall * 100);
+      document.getElementById('ftmo-target-bar').style.width = tPct + '%';
+      document.getElementById('ftmo-daily-bar').style.width = dPct + '%';
+      document.getElementById('ftmo-daily-bar').style.background = dPct > 80 ? 'var(--red)' : dPct > 60 ? 'var(--amber)' : 'var(--green)';
+      document.getElementById('ftmo-overall-bar').style.width = oPct + '%';
+      document.getElementById('ftmo-overall-bar').style.background = oPct > 80 ? 'var(--red)' : oPct > 60 ? 'var(--amber)' : 'var(--green)';
+      document.getElementById('ftmo-days-bar').style.width = Math.min(100, activeDays / 4 * 100) + '%';
+      const sw = document.getElementById('ftmo-status-wrap');
+      if (!ts.length) { sw.innerHTML = '<span style="color:var(--text2)">Aucun trade enregistré sur le compte FTMO.</span>'; return; }
+      const failed = totalPnl <= -maxOverall || todayLoss >= maxDaily;
+      const passed = phase !== 'funded' && totalPnl >= targetAmt && activeDays >= 4;
+      sw.innerHTML = failed
+        ? '<span class="status-fail"><i class="ti ti-alert-circle"></i> Challenge échoué — limite de perte atteinte.</span>'
+        : passed
+          ? '<span class="status-ok"><i class="ti ti-circle-check"></i> Objectifs atteints ! Tu peux passer à la phase suivante.</span>'
+          : `<span>En cours — P&L : <strong class="${totalPnl >= 0 ? 'status-ok' : 'status-fail'}">${fmt(totalPnl)}</strong> &nbsp;·&nbsp; Jours actifs : <strong>${activeDays}/4</strong> &nbsp;·&nbsp; Daily loss : <strong class="${todayLoss > maxDaily * 0.6 ? 'status-warn' : ''}">$${todayLoss.toFixed(0)}</strong></span>`;
+    }
+
+    function renderStats() {
+      const wins = trades.filter(t => t.pnl > 0);
+      const losses = trades.filter(t => t.pnl < 0);
+      const wr = trades.length ? Math.round(wins.length / trades.length * 100) + '%' : '—';
+      const avgWin = wins.length ? wins.reduce((s, t) => s + t.pnl, 0) / wins.length : null;
+      const avgLoss = losses.length ? losses.reduce((s, t) => s + t.pnl, 0) / losses.length : null;
+      const rr = avgWin !== null && avgLoss !== null ? (Math.abs(avgWin) / Math.abs(avgLoss)).toFixed(2) : '—';
+      let maxStreak = 0, cur = 0;
+      trades.forEach(t => { if (t.pnl > 0) { cur++; maxStreak = Math.max(maxStreak, cur); } else cur = 0; });
+      const pairs = {};
+      trades.forEach(t => { pairs[t.pair] = (pairs[t.pair] || 0) + t.pnl; });
+      const bestPair = Object.keys(pairs).length ? Object.keys(pairs).reduce((a, b) => pairs[a] > pairs[b] ? a : b) : '—';
+      document.getElementById('s-wr').textContent = wr;
+      document.getElementById('s-rr').textContent = rr;
+      document.getElementById('s-avg-win').textContent = avgWin !== null ? '+$' + avgWin.toFixed(2) : '—';
+      document.getElementById('s-avg-loss').textContent = avgLoss !== null ? '-$' + Math.abs(avgLoss).toFixed(2) : '—';
+      document.getElementById('s-streak').textContent = maxStreak || '—';
+      document.getElementById('s-best-pair').textContent = bestPair;
+      const detail = document.getElementById('stats-detail-wrap');
+      if (!trades.length) { detail.innerHTML = '<div class="empty-state">Ajoutez des trades pour voir les statistiques.</div>'; return; }
+      detail.innerHTML = ['ftmo', 'demo', 'tv'].map(acc => {
+        const ts = trades.filter(t => t.acc === acc);
+        if (!ts.length) return '';
+        const w = ts.filter(t => t.pnl > 0);
+        const pnl = ts.reduce((s, t) => s + t.pnl, 0);
+        return `<div class="stats-detail-row">
+      <span style="font-weight:600;font-size:13px;min-width:120px">${acc === 'ftmo' ? 'FTMO Challenge' : acc === 'demo' ? 'Pepperstone Demo' : 'Pepperstone TV'}</span>
+      <span style="font-size:13px">P&L : <strong class="${pnl >= 0 ? 'pnl-pos' : 'pnl-neg'}">${fmt(pnl)}</strong></span>
+      <span style="font-size:13px;color:var(--text2)">${ts.length} trade${ts.length > 1 ? 's' : ''}</span>
+      <span style="font-size:13px;color:var(--text2)">Win rate : <strong style="color:var(--text)">${ts.length ? Math.round(w.length / ts.length * 100) + '%' : '—'}</strong></span>
+    </div>`;
+      }).join('');
+    }
+
+    function renderChart() {
+      const dates = [...new Set(trades.map(t => t.date))].sort();
+      if (!dates.length) { if (pnlChart) { pnlChart.destroy(); pnlChart = null; } return; }
+      const buildCumul = acc => { let c = 0; return dates.map(d => { c += trades.filter(t => t.acc === acc && t.date === d).reduce((s, t) => s + t.pnl, 0); return parseFloat(c.toFixed(2)); }); };
+      if (pnlChart) pnlChart.destroy();
+      pnlChart = new Chart(document.getElementById('pnlChart').getContext('2d'), {
+        type: 'line',
+        data: {
+          labels: dates, datasets: [
+            { label: 'FTMO', data: buildCumul('ftmo'), borderColor: '#4a90d9', backgroundColor: 'rgba(74,144,217,0.06)', borderWidth: 2, tension: 0.3, pointRadius: 3, fill: true },
+            { label: 'Demo', data: buildCumul('demo'), borderColor: '#2db57a', backgroundColor: 'rgba(45,181,122,0.06)', borderWidth: 2, tension: 0.3, pointRadius: 3, fill: true },
+            { label: 'TV', data: buildCumul('tv'), borderColor: '#9b6dff', backgroundColor: 'rgba(155,109,255,0.06)', borderWidth: 2, tension: 0.3, pointRadius: 3, fill: true }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+          scales: {
+            y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#888', callback: v => '$' + v } },
+            x: { grid: { display: false }, ticks: { color: '#888', maxRotation: 45, autoSkip: true } }
+          }
+        }
+      });
+    }
+
+    renderAll();
+  </script>
 </body>
+
 </html>
