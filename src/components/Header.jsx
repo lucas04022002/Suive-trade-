@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-export default function Header({ onImport }) {
+export default function Header({ onImportCSV, onExportJSON, onImportJSON }) {
   const [date, setDate] = useState('');
 
   useEffect(() => {
@@ -21,9 +21,17 @@ export default function Header({ onImport }) {
       <div style={{ fontSize: 15, fontWeight: 600, letterSpacing: '-.3px' }}>
         Trading <span style={{ color: 'var(--text2)', fontWeight: 400 }}>Dashboard</span>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
         <div style={{ fontSize: 12, color: 'var(--text2)' }}>{date}</div>
-        <button className="btn btn-secondary btn-sm" onClick={onImport}>
+        <button className="btn btn-secondary btn-sm" onClick={onExportJSON} title="Sauvegarder tous les trades en JSON">
+          <i className="ti ti-download" />
+          Exporter
+        </button>
+        <button className="btn btn-secondary btn-sm" onClick={onImportJSON} title="Charger un fichier JSON exporté">
+          <i className="ti ti-file-import" />
+          Charger JSON
+        </button>
+        <button className="btn btn-secondary btn-sm" onClick={onImportCSV}>
           <i className="ti ti-upload" />
           Importer CSV
         </button>
