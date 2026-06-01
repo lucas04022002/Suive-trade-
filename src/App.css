@@ -1,4 +1,4 @@
-/* Responsive grids */
+/* ── GRIDS ───────────────────────────────────────────── */
 .accounts-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -25,28 +25,164 @@
 }
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 10px;
   margin-bottom: 10px;
 }
 
-/* Tablet */
+/* ── TABLET 900px ────────────────────────────────────── */
 @media (max-width: 900px) {
-  .accounts-grid { grid-template-columns: repeat(3, 1fr); }
   .metrics-row { grid-template-columns: repeat(2, 1fr); }
-  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .stats-grid   { grid-template-columns: repeat(3, 1fr); }
+  .form-grid    { grid-template-columns: repeat(3, 1fr); }
 }
 
-/* Mobile */
+/* ── MOBILE 640px ────────────────────────────────────── */
 @media (max-width: 640px) {
   .accounts-grid { grid-template-columns: 1fr; }
-  .metrics-row { grid-template-columns: repeat(2, 1fr); }
-  .stats-grid { grid-template-columns: repeat(2, 1fr); }
-  .ftmo-rules { grid-template-columns: 1fr; }
-  .form-grid { grid-template-columns: repeat(2, 1fr); }
+  .metrics-row   { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .stats-grid    { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .ftmo-rules    { grid-template-columns: 1fr; }
+  .form-grid     { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ── SMALL 400px ─────────────────────────────────────── */
+@media (max-width: 400px) {
+  .form-grid { grid-template-columns: 1fr 1fr; }
+}
+
+/* ── HEADER ──────────────────────────────────────────── */
+.header-date { font-size: 12px; color: var(--text2); }
+
+@media (max-width: 600px) {
+  .header-date { display: none; }
+  .header-btn-label { display: none; }
+}
+
+/* ── TABS ────────────────────────────────────────────── */
+.tabs-wrap {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 1.5rem;
+  background: var(--bg2);
+  border-radius: var(--radius);
+  padding: 4px;
+  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+@media (max-width: 640px) {
+  .tabs-wrap {
+    width: 100%;
+  }
+  .tabs-wrap button {
+    flex: 1;
+    justify-content: center;
+    padding: 8px 6px !important;
+    font-size: 12px !important;
+  }
 }
 
 @media (max-width: 380px) {
-  .metrics-row { grid-template-columns: 1fr 1fr; }
-  .stats-grid { grid-template-columns: 1fr 1fr; }
+  .tab-label { display: none; }
+  .tabs-wrap button { padding: 8px 10px !important; }
+}
+
+/* ── TRADE TABLE → CARDS on mobile ──────────────────── */
+.trade-table-wrap { overflow-x: auto; }
+
+.trade-cards {
+  display: none;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.trade-card {
+  padding: 12px 14px;
+  border-bottom: 0.5px solid var(--border);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  gap: 6px 10px;
+  align-items: center;
+}
+.trade-card:last-child { border-bottom: none; }
+
+.trade-card-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.trade-card-bottom {
+  font-size: 11px;
+  color: var(--text2);
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.trade-card-pnl {
+  font-size: 16px;
+  font-weight: 700;
+  text-align: right;
+  grid-row: 1 / 3;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+@media (max-width: 640px) {
+  .trade-table-wrap table { display: none; }
+  .trade-cards { display: flex; }
+}
+
+/* ── STATS BREAKDOWN ─────────────────────────────────── */
+.stats-row {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 0.5px solid var(--border);
+  flex-wrap: wrap;
+}
+.stats-row:last-child { border-bottom: none; }
+
+@media (max-width: 640px) {
+  .stats-row {
+    gap: 8px;
+    padding: 10px 14px;
+  }
+  .stats-row-name {
+    width: 100%;
+    font-weight: 600;
+    font-size: 13px;
+  }
+}
+
+/* ── FILTERS BAR ─────────────────────────────────────── */
+.filters-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* ── FORM NOTE ROW ───────────────────────────────────── */
+.form-note-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+@media (max-width: 480px) {
+  .form-note-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .form-note-row .btn { width: 100%; justify-content: center; }
 }

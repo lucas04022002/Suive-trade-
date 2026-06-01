@@ -10,30 +10,33 @@ export default function Header({ onImportCSV, onExportJSON, onImportJSON }) {
 
   return (
     <header style={{
-      padding: '1.25rem 2rem',
+      padding: '1rem 1.5rem',
       borderBottom: '0.5px solid var(--border)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      flexWrap: 'wrap',
-      gap: '10px',
+      gap: 10,
     }}>
-      <div style={{ fontSize: 15, fontWeight: 600, letterSpacing: '-.3px' }}>
+      <div style={{ fontSize: 15, fontWeight: 600, letterSpacing: '-.3px', flexShrink: 0 }}>
         Trading <span style={{ color: 'var(--text2)', fontWeight: 400 }}>Dashboard</span>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-        <div style={{ fontSize: 12, color: 'var(--text2)' }}>{date}</div>
-        <button className="btn btn-secondary btn-sm" onClick={onExportJSON} title="Sauvegarder tous les trades en JSON">
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span className="header-date">{date}</span>
+
+        <button className="btn btn-secondary btn-sm" onClick={onExportJSON} title="Exporter les trades en JSON">
           <i className="ti ti-download" />
-          Exporter
+          <span className="header-btn-label">Exporter</span>
         </button>
-        <button className="btn btn-secondary btn-sm" onClick={onImportJSON} title="Charger un fichier JSON exporté">
+
+        <button className="btn btn-secondary btn-sm" onClick={onImportJSON} title="Charger un fichier JSON">
           <i className="ti ti-file-import" />
-          Charger JSON
+          <span className="header-btn-label">Charger JSON</span>
         </button>
-        <button className="btn btn-secondary btn-sm" onClick={onImportCSV}>
+
+        <button className="btn btn-secondary btn-sm" onClick={onImportCSV} title="Importer un CSV">
           <i className="ti ti-upload" />
-          Importer CSV
+          <span className="header-btn-label">Importer CSV</span>
         </button>
       </div>
     </header>

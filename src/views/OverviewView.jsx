@@ -1,7 +1,7 @@
 import AccountCard from '../components/AccountCard';
 import TradeTable from '../components/TradeTable';
 import PnLChart from '../components/PnLChart';
-import { fmt, STARTS } from '../utils/formatters';
+import { fmt } from '../utils/formatters';
 
 export default function OverviewView({ trades }) {
   const allPnl = trades.reduce((s, t) => s + t.pnl, 0);
@@ -27,25 +27,13 @@ export default function OverviewView({ trades }) {
 
   return (
     <div>
-      {/* Account cards */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(3, 1fr)',
-        gap: 12,
-        marginBottom: '1.25rem',
-      }} className="accounts-grid">
+      <div className="accounts-grid">
         <AccountCard acc="ftmo" trades={trades} />
         <AccountCard acc="demo" trades={trades} />
         <AccountCard acc="tv" trades={trades} />
       </div>
 
-      {/* Metrics */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(4, 1fr)',
-        gap: 10,
-        marginBottom: '1.5rem',
-      }} className="metrics-row">
+      <div className="metrics-row">
         {metrics.map(m => (
           <div key={m.label} className="card" style={{ padding: '1rem 1.1rem' }}>
             <div style={{ fontSize: 20, fontWeight: 600, letterSpacing: '-.4px', color: m.color || 'var(--text)' }}>
@@ -56,7 +44,6 @@ export default function OverviewView({ trades }) {
         ))}
       </div>
 
-      {/* Chart */}
       <div className="card" style={{ padding: '1rem 1.1rem', marginBottom: '1.25rem' }}>
         <div className="section-title">Courbe P&L cumulée</div>
         <div style={{ height: 180, position: 'relative' }}>
@@ -72,16 +59,13 @@ export default function OverviewView({ trades }) {
         </div>
       </div>
 
-      {/* Recent trades */}
       <div>
         <div className="section-title">Trades récents</div>
         <div className="card" style={{ overflow: 'hidden' }}>
           {recent.length ? (
             <TradeTable trades={recent} />
           ) : (
-            <div className="empty-state">
-              Aucun trade — va dans l'onglet Trades pour commencer.
-            </div>
+            <div className="empty-state">Aucun trade — va dans l'onglet Trades pour commencer.</div>
           )}
         </div>
       </div>

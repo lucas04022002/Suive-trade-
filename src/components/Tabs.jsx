@@ -1,22 +1,13 @@
 const TABS = [
   { id: 'overview', icon: 'ti-layout-dashboard', label: 'Vue globale' },
-  { id: 'trades', icon: 'ti-list', label: 'Trades' },
-  { id: 'ftmo', icon: 'ti-shield-check', label: 'FTMO' },
-  { id: 'stats', icon: 'ti-chart-bar', label: 'Stats' },
+  { id: 'trades',   icon: 'ti-list',             label: 'Trades' },
+  { id: 'ftmo',     icon: 'ti-shield-check',      label: 'FTMO' },
+  { id: 'stats',    icon: 'ti-chart-bar',         label: 'Stats' },
 ];
 
 export default function Tabs({ active, onChange }) {
   return (
-    <div style={{
-      display: 'flex',
-      gap: 4,
-      marginBottom: '1.5rem',
-      background: 'var(--bg2)',
-      borderRadius: 'var(--radius)',
-      padding: 4,
-      width: 'fit-content',
-      overflowX: 'auto',
-    }}>
+    <div className="tabs-wrap">
       {TABS.map(tab => (
         <button
           key={tab.id}
@@ -38,8 +29,8 @@ export default function Tabs({ active, onChange }) {
             fontFamily: 'inherit',
           }}
         >
-          <i className={`ti ${tab.icon}`} style={{ fontSize: 14 }} />
-          {tab.label}
+          <i className={`ti ${tab.icon}`} style={{ fontSize: 14, flexShrink: 0 }} />
+          <span className="tab-label">{tab.label}</span>
         </button>
       ))}
     </div>

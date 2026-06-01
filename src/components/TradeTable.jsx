@@ -2,6 +2,37 @@ import { fmt } from '../utils/formatters';
 
 const ACC_LABELS = { ftmo: 'FTMO', demo: 'Demo', tv: 'TV' };
 
+function TradeCard({ trade, onDelete }) {
+  return (
+    <div className="trade-card">
+      {/* Left: info */}
+      <div>
+        <div className="trade-card-top">
+          <span style={{ fontWeight: 700, fontSize: 14 }}>{trade.pair}</span>
+          <span className={`dir-badge dir-${trade.dir.toLowerCase()}`}>{trade.dir}</span>
+          <span className={`badge badge-${trade.acc}`}>{ACC_LABELS[trade.acc]}</span>
+        </div>
+        <div className="trade-card-bottom">
+          <span>{trade.date}</span>
+          {trade.lots ? <span>{trade.lots} lots</span> : null}
+          {trade.entry ? <span>@ {trade.entry}</span> : null}
+          {trade.note ? <span style={{ color: 'var(--text3)' }}>{trade.note}</span> : null}
+        </div>
+      </div>
+
+      {/* Right: P&L + delete */}
+      <div className="trade-card-pnl">
+        <span className={trade.pnl >= 0 ? 'pnl-pos' : 'pnl-neg'}>{fmt(trade.pnl)}</span>
+        {onDelete && (
+          <button className="btn btn-icon" onClick={() => onDelete(trade.id)} title="Supprimer" style={{ padding: '2px 4px' }}>
+            <i className="ti ti-trash" style={{ fontSize: 13 }} />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function TradeRow({ trade, onDelete }) {
   return (
     <tr>
@@ -33,12 +64,13 @@ export default function TradeTable({ trades, onDelete }) {
   }
 
   return (
-    <div style={{ overflowX: 'auto' }}>
+    <div className="trade-table-wrap">
+      {/* Desktop: table */}
       <table className="trade-table">
         <thead>
           <tr>
             <th style={{ width: 80 }}>Date</th>
-            <th style={{ width: 80 }}>Compte</th>
+            <th style={{ width: 70 }}>Compte</th>
             <th style={{ width: 75 }}>Paire</th>
             <th style={{ width: 55 }}>Dir.</th>
             <th style={{ width: 50 }}>Lots</th>
@@ -50,11 +82,14 @@ export default function TradeTable({ trades, onDelete }) {
           </tr>
         </thead>
         <tbody>
-          {trades.map(t => (
-            <TradeRow key={t.id} trade={t} onDelete={onDelete} />
-          ))}
+          {trades.map(t => <TradeRow key={t.id} trade={t} onDelete={onDelete} />)}
         </tbody>
       </table>
+
+      {/* Mobile: cards */}
+      <div className="trade-cards">
+        {trades.map(t => <TradeCard key={t.id} trade={t} onDelete={onDelete} />)}
+      </div>
     </div>
   );
 }

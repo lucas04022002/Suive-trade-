@@ -39,7 +39,7 @@ export default function TradesView({ trades, onAdd, onDelete }) {
       <div className="card" style={{ padding: '1.1rem 1.25rem', marginBottom: '1.25rem' }}>
         <div className="section-title">Ajouter un trade</div>
         <form onSubmit={submit}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 10, marginBottom: 10 }} className="form-grid">
+          <div className="form-grid">
             <div>
               <label className="form-label">Compte</label>
               <select className="form-select" {...field('acc')}>
@@ -80,12 +80,13 @@ export default function TradesView({ trades, onAdd, onDelete }) {
               <input type="number" step="0.01" className="form-input" placeholder="50.00" required {...field('pnl')} />
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
+
+          <div className="form-note-row">
             <div style={{ flex: 1 }}>
               <label className="form-label">Note</label>
               <input type="text" className="form-input" placeholder="Commentaire..." {...field('note')} />
             </div>
-            <button type="submit" className="btn btn-primary" style={{ marginBottom: 0 }}>
+            <button type="submit" className="btn btn-primary">
               <i className="ti ti-plus" /> Ajouter
             </button>
           </div>
@@ -93,13 +94,13 @@ export default function TradesView({ trades, onAdd, onDelete }) {
       </div>
 
       {/* Filters + table */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, flexWrap: 'wrap', gap: 8 }}>
+      <div className="filters-bar">
         <div className="section-title" style={{ marginBottom: 0 }}>
           Historique ({filtered.length} trade{filtered.length > 1 ? 's' : ''})
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <select className="form-select" style={{ width: 'auto', fontSize: 12, padding: '5px 8px' }} value={accFilter} onChange={e => setAccFilter(e.target.value)}>
-            <option value="all">Tous les comptes</option>
+            <option value="all">Tous</option>
             <option value="ftmo">FTMO</option>
             <option value="demo">Demo</option>
             <option value="tv">TV</option>
