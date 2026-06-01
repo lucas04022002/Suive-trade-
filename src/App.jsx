@@ -12,7 +12,7 @@ import { useTrades } from './hooks/useTrades';
 export default function App() {
   const [tab, setTab] = useState('overview');
   const [showImport, setShowImport] = useState(false);
-  const { trades, addTrades, addTrade, deleteTrade } = useTrades();
+  const { trades, loading, addTrades, addTrade, deleteTrade } = useTrades();
 
   function handleDelete(id) {
     if (window.confirm('Supprimer ce trade ?')) deleteTrade(id);
@@ -21,13 +21,18 @@ export default function App() {
   return (
     <>
       <Header onImport={() => setShowImport(true)} />
-      <div className="container">
+      {loading && (
+        <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text2)', fontSize: 13 }}>
+          Chargement des trades…
+        </div>
+      )}
+      {!loading && <div className="container">
         <Tabs active={tab} onChange={setTab} />
         {tab === 'overview' && <OverviewView trades={trades} />}
         {tab === 'trades' && <TradesView trades={trades} onAdd={addTrade} onDelete={handleDelete} />}
         {tab === 'ftmo' && <FTMOView trades={trades} />}
         {tab === 'stats' && <StatsView trades={trades} />}
-      </div>
+      </div>}
       {showImport && (
         <ImportModal
           onImport={newTrades => addTrades(newTrades)}

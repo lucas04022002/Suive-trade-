@@ -1,38 +1,66 @@
 import { useState, useEffect } from 'react';
+import { supabase } from '../utils/supabase';
 
-const STORAGE_KEY = 'trading_dashboard_v2';
+const LS_KEY = 'trading_dashboard_v2';
+
+function lsLoad() {
+  try {
+    const s = localStorage.getItem(LS_KEY);
+    if (s) { const p = JSON.parse(s); if (Array.isArray(p)) return p; }
+  } catch {}
+  return [];
+}
 
 export function useTrades() {
-  const [trades, setTrades] = useState(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch (e) {}
-    return [];
-  });
+  const [trades, setTrades] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(trades));
+    if (supabase) {
+      supabase.from('trades').select('*').order('date', { ascending: true })
+        .then(({ data, error }) => {
+          if (!error && data) setTrades(data);
+          setLoading(false);
+        });
+    } else {
+      setTrades(lsLoad());
+      setLoading(false);
+    }
+  }, []);
+
+  // localStorage fallback sync
+  useEffect(() => {
+    if (!supabase) localStorage.setItem(LS_KEY, JSON.stringify(trades));
   }, [trades]);
 
-  function addTrades(newTrades) {
-    setTrades(prev => [...prev, ...newTrades]);
+  async function addTrades(newTrades) {
+    const withIds = newTrades.map(t => ({ ...t, id: t.id?.toString() ?? crypto.randomUUID() }));
+    if (supabase) {
+      const { data, error } = await supabase.from('trades').insert(withIds).select();
+      if (!error && data) setTrades(prev => [...prev, ...data]);
+    } else {
+      setTrades(prev => [...prev, ...withIds]);
+    }
   }
 
-  function addTrade(trade) {
-    setTrades(prev => [...prev, { ...trade, id: Date.now() }]);
+  async function addTrade(trade) {
+    const t = { ...trade, id: crypto.randomUUID() };
+    if (supabase) {
+      const { data, error } = await supabase.from('trades').insert([t]).select();
+      if (!error && data) setTrades(prev => [...prev, ...data]);
+    } else {
+      setTrades(prev => [...prev, t]);
+    }
   }
 
-  function deleteTrade(id) {
-    setTrades(prev => prev.filter(t => t.id !== id));
+  async function deleteTrade(id) {
+    if (supabase) {
+      const { error } = await supabase.from('trades').delete().eq('id', id);
+      if (!error) setTrades(prev => prev.filter(t => t.id !== id));
+    } else {
+      setTrades(prev => prev.filter(t => t.id !== id));
+    }
   }
 
-  function clearAll() {
-    setTrades([]);
-  }
-
-  return { trades, addTrades, addTrade, deleteTrade, clearAll };
+  return { trades, loading, addTrades, addTrade, deleteTrade };
 }
